@@ -1,0 +1,31 @@
+*** Creating Trace Output File '.\out\TDS.tra' Ok.
+### Preparing for ADS-LD.
+### Creating ADS-LD Command Line
+### List of Objects: adding '".\out\main.o"'
+### List of Objects: adding '".\out\stm32f10x_it.o"'
+### List of Objects: adding '".\out\system_stm32f10x.o"'
+### List of Objects: adding '".\out\misc.o"'
+### List of Objects: adding '".\out\stm32f10x_adc.o"'
+### List of Objects: adding '".\out\stm32f10x_exti.o"'
+### List of Objects: adding '".\out\stm32f10x_gpio.o"'
+### List of Objects: adding '".\out\stm32f10x_tim.o"'
+### List of Objects: adding '".\out\stm32f10x_usart.o"'
+### List of Objects: adding '".\out\core_cm3.o"'
+### List of Objects: adding '".\out\startup_stm32f10x_md.o"'
+### List of Objects: adding '".\out\stm32f10x_rcc.o"'
+### ADS-LD Command completed:
+--cpu Cortex-M3 ".\out\main.o" ".\out\stm32f10x_it.o" ".\out\system_stm32f10x.o" ".\out\misc.o" ".\out\stm32f10x_adc.o" ".\out\stm32f10x_exti.o" ".\out\stm32f10x_gpio.o" ".\out\stm32f10x_tim.o" ".\out\stm32f10x_usart.o" ".\out\core_cm3.o" ".\out\startup_stm32f10x_md.o" ".\out\stm32f10x_rcc.o" 
+--strict --scatter ".\out\TDS.sct" 
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\out\TDS.map" -o .\out\TDS.axf### Preparing Environment (PrepEnvAds)
+### ADS-LD Output File: '.\out\TDS.axf'
+### ADS-LD Command File: '.\out\TDS.lnp'
+### Checking for dirty Components...
+### Creating CmdFile '.\out\TDS.lnp', Handle=0x000005D0
+### Writing '.lnp' file
+### ADS-LD Command file '.\out\TDS.lnp' is ready.
+### ADS-LD: About to start ADS-LD Thread.
+### ADS-LD: executed with 0 errors
+### Updating obj list
+### LDADS_file() completed.
