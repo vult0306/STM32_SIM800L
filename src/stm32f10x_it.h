@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    TIM/TimeBase/stm32f10x_it.h 
+  * @file    SysTick/TimeBase/stm32f10x_it.h 
   * @author  MCD Application Team
   * @version V3.5.0
   * @date    08-April-2011
@@ -40,8 +40,7 @@ void SVC_Handler(void);
 void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
-void TIM2_IRQHandler(void);
-					 
+
 #endif /* __STM32F10x_IT_H */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

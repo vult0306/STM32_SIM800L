@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    TIM/TimeBase/main.c 
+  * @file    SysTick/TimeBase/main.c 
   * @author  MCD Application Team
   * @version V3.5.0
   * @date    08-April-2011
-  * @brief   Main program body
+  * @brief   Main program body.
   ******************************************************************************
   * @attention
   *
@@ -20,13 +20,13 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-// #include "stm32f10x.h"
 #include "main.h"
+
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
   */
 
-/** @addtogroup TIM_TimeBase
+/** @addtogroup SysTick_TimeBase
   * @{
   */ 
 
@@ -34,23 +34,15 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-TIM_OCInitTypeDef  TIM_OCInitStructure;
-__IO uint16_t CCR1_Val = 40961;
-__IO uint16_t CCR2_Val = 27309;
-__IO uint16_t CCR3_Val = 13654;
-__IO uint16_t CCR4_Val = 6826;
-uint16_t PrescalerValue = 0;
+static __IO uint32_t TimingDelay;
 
 /* Private function prototypes -----------------------------------------------*/
-void RCC_Configuration(void);
-void GPIO_Configuration(void);
-void NVIC_Configuration(void);
+void Delay(__IO uint32_t nTime);
 
 /* Private functions ---------------------------------------------------------*/
 
 /**
-  * @brief  Main program
+  * @brief  Main program.
   * @param  None
   * @retval None
   */
@@ -62,132 +54,68 @@ int main(void)
        To reconfigure the default setting of SystemInit() function, refer to
        system_stm32f10x.c file
      */     
-       
-  /* System Clocks Configuration */
-  RCC_Configuration();
 
-  /* NVIC Configuration */
-  NVIC_Configuration();
+  /* Setup SysTick Timer for 1 msec interrupts.
+     ------------------------------------------
+    1. The SysTick_Config() function is a CMSIS function which configure:
+       - The SysTick Reload register with value passed as function parameter.
+       - Configure the SysTick IRQ priority to the lowest value (0x0F).
+       - Reset the SysTick Counter register.
+       - Configure the SysTick Counter clock source to be Core Clock Source (HCLK).
+       - Enable the SysTick Interrupt.
+       - Start the SysTick Counter.
+    
+    2. You can change the SysTick Clock source to be HCLK_Div8 by calling the
+       SysTick_CLKSourceConfig(SysTick_CLKSource_HCLK_Div8) just after the
+       SysTick_Config() function call. The SysTick_CLKSourceConfig() is defined
+       inside the misc.c file.
 
-  /* GPIO Configuration */
-  GPIO_Configuration();
+    3. You can change the SysTick IRQ priority by calling the
+       NVIC_SetPriority(SysTick_IRQn,...) just after the SysTick_Config() function 
+       call. The NVIC_SetPriority() is defined inside the core_cm3.h file.
 
-  /* ---------------------------------------------------------------
-    TIM2 Configuration: Output Compare Timing Mode:
-    TIM2 counter clock at 6 MHz
-    CC1 update rate = TIM2 counter clock / CCR1_Val = 146.48 Hz
-    CC2 update rate = TIM2 counter clock / CCR2_Val = 219.7 Hz
-    CC3 update rate = TIM2 counter clock / CCR3_Val = 439.4 Hz
-    CC4 update rate = TIM2 counter clock / CCR4_Val = 878.9 Hz
-  --------------------------------------------------------------- */
+    4. To adjust the SysTick time base, use the following formula:
+                            
+         Reload Value = SysTick Counter Clock (Hz) x  Desired Time base (s)
+    
+       - Reload Value is the parameter to be passed for SysTick_Config() function
+       - Reload Value should not exceed 0xFFFFFF
+   */
+  if (SysTick_Config(SystemCoreClock / 1000))
+  { 
+    /* Capture error */ 
+    while (1);
+  }
 
-  /* Compute the prescaler value */
-  PrescalerValue = (uint16_t) (SystemCoreClock / 12000000) - 1;
-
-  /* Time base configuration */
-  TIM_TimeBaseStructure.TIM_Period = 65535;
-  TIM_TimeBaseStructure.TIM_Prescaler = 0;
-  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-
-  TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
-
-  /* Prescaler configuration */
-  TIM_PrescalerConfig(TIM2, PrescalerValue, TIM_PSCReloadMode_Immediate);
-
-  /* Output Compare Timing Mode configuration: Channel1 */
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_Timing;
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR1_Val;
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-
-  TIM_OC1Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Disable);
-
-  /* Output Compare Timing Mode configuration: Channel2 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR2_Val;
-
-  TIM_OC2Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Disable);
-
-  /* Output Compare Timing Mode configuration: Channel3 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR3_Val;
-
-  TIM_OC3Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC3PreloadConfig(TIM2, TIM_OCPreload_Disable);
-
-  /* Output Compare Timing Mode configuration: Channel4 */
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = CCR4_Val;
-
-  TIM_OC4Init(TIM2, &TIM_OCInitStructure);
-
-  TIM_OC4PreloadConfig(TIM2, TIM_OCPreload_Disable);
-
-  /* TIM IT enable */
-  TIM_ITConfig(TIM2, TIM_IT_CC1 | TIM_IT_CC2 | TIM_IT_CC3 | TIM_IT_CC4, ENABLE);
-
-  /* TIM2 enable counter */
-  TIM_Cmd(TIM2, ENABLE);
-
-  while (1);
+  while (1)
+  {
+    Delay(100);
+  }
 }
 
 /**
-  * @brief  Configures the different system clocks.
-  * @param  None
+  * @brief  Inserts a delay time.
+  * @param  nTime: specifies the delay time length, in milliseconds.
   * @retval None
   */
-void RCC_Configuration(void)
-{
-  /* PCLK1 = HCLK/4 */
-  RCC_PCLK1Config(RCC_HCLK_Div4);
+void Delay(__IO uint32_t nTime)
+{ 
+  TimingDelay = nTime;
 
-  /* TIM2 clock enable */
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-
-  /* GPIOC clock enable */
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+  while(TimingDelay != 0);
 }
 
 /**
-  * @brief  Configure the GPIO Pins.
+  * @brief  Decrements the TimingDelay variable.
   * @param  None
   * @retval None
   */
-void GPIO_Configuration(void)
+void TimingDelay_Decrement(void)
 {
-  GPIO_InitTypeDef GPIO_InitStructure;
-
-  /* GPIOC Configuration:Pin6, 7, 8 and 9 as alternate function push-pull */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-}
-
-/**
-  * @brief  Configure the nested vectored interrupt controller.
-  * @param  None
-  * @retval None
-  */
-void NVIC_Configuration(void)
-{
-  NVIC_InitTypeDef NVIC_InitStructure;
-
-  /* Enable the TIM2 global Interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-
-  NVIC_Init(&NVIC_InitStructure);
+  if (TimingDelay != 0x00)
+  { 
+    TimingDelay--;
+  }
 }
 
 #ifdef  USE_FULL_ASSERT
@@ -200,22 +128,24 @@ void NVIC_Configuration(void)
   * @retval None
   */
 void assert_failed(uint8_t* file, uint32_t line)
-{
+{ 
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
+  /* Infinite loop */
   while (1)
-  {}
+  {
+  }
 }
 
 #endif
 
 /**
   * @}
-  */ 
+  */
 
 /**
   * @}
-  */ 
+  */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
