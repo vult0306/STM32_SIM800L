@@ -7,12 +7,16 @@
 
 #include "stm32f10x.h"
 
+void booting(void);
 void CLK_Config(void);
 void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
 void UART1_Config(void);
 void putchar(int c);
+bool strcmp(char*,char*,u8);
+void strcpy(char*,char*,u8);
+void memset(void*,char,u16);
 
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf

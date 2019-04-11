@@ -24,6 +24,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include "main.h"
+#include "sim800l.h"
+
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
   */
@@ -37,7 +39,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern uint16_t RxCounter;
-extern char RxBuffer[MAX_BUF];
+extern char SIM_BUFFER[MAX_BUFFER];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -154,8 +156,8 @@ void SIM_IRQHandler(void)
   if(USART_GetITStatus(SIM, USART_IT_RXNE) != RESET)
   {
     temp = (USART_ReceiveData(SIM) & 0x7F);
-    if( RxCounter < MAX_BUF)
-    RxBuffer[RxCounter++]=temp;
+    if( RxCounter < MAX_BUFFER)
+    SIM_BUFFER[RxCounter++]=temp;
   }
 }
 /******************************************************************************/

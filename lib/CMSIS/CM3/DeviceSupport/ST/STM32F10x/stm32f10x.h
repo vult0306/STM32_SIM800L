@@ -91,6 +91,14 @@
    the Flash memory density ranges between 512 and 1024 Kbytes.
  - Connectivity line devices are STM32F105xx and STM32F107xx microcontrollers.
   */
+#if !defined NULL
+#define NULL 0
+#endif
+#ifndef __cplusplus
+typedef unsigned char bool;
+static const bool FALSE = 0;
+static const bool TRUE = 1;
+#endif
 
 #if !defined (STM32F10X_LD) && !defined (STM32F10X_LD_VL) && !defined (STM32F10X_MD) && !defined (STM32F10X_MD_VL) && !defined (STM32F10X_HD) && !defined (STM32F10X_HD_VL) && !defined (STM32F10X_XL) && !defined (STM32F10X_CL)
  #error "Please select first the target STM32F10x device used in your application (in stm32f10x.h file)"

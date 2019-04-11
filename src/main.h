@@ -34,13 +34,13 @@
 #define SIM_IRQn              USART1_IRQn
 #define SIM_IRQHandler        USART1_IRQHandler
 
-#define MAX_BUF 255
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void TimingDelay_Decrement(void);
-
+void Delay(__IO uint32_t);
+// void Delay(__IO uint32_t nTime);
 #endif /* __MAIN_H */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
