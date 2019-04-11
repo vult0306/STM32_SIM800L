@@ -8,16 +8,15 @@
 // RCC_Configuration
 // Cau hinh clock cua cac module can su dung
 //------------------------------------------------
-// void CLK_Config(void)
-// {
-// 	RCC_PCLK2Config(RCC_HCLK_Div1);
+void CLK_Config(void)
+{
+	// RCC_PCLK2Config(RCC_HCLK_Div1);
 	
-// 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 |
-// 						   RCC_APB1Periph_USART2, ENABLE);
+	// RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 |
+	// 					   RCC_APB1Periph_USART2, ENABLE);
 	
-// 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC |
-// 						   RCC_APB2Periph_USART1, ENABLE);
-// }
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+}
 
 
 //------------------------------------------------
@@ -67,13 +66,13 @@
 //------------------------------------------------
 // GPIO_Configuration
 //------------------------------------------------
-// void GPIO_Config(void)
-// {
-// 	GPIO_InitTypeDef GPIO_InitStructure;
-// 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-// 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-// 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
-// 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+void GPIO_Config(void)
+{
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 // 	/* Configure USARTy Rx as input floating */
 // 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
@@ -85,7 +84,7 @@
 // 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 // 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 // 	GPIO_Init(GPIOA, &GPIO_InitStructure);
-// }
+}
 
 //------------------------------------------------
   /* USARTx configured as follow:

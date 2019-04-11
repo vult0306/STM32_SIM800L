@@ -81,6 +81,8 @@ int main(void)
        - Reload Value is the parameter to be passed for SysTick_Config() function
        - Reload Value should not exceed 0xFFFFFF
    */
+  CLK_Config();
+  GPIO_Config();
   if (SysTick_Config(SystemCoreClock / 1000))
   { 
     /* Capture error */ 
@@ -89,7 +91,12 @@ int main(void)
 
   while (1)
   {
-    Delay(100);
+    Delay(1000);
+    /* Set PD0 and PD2 */
+    GPIOA->BSRR = 0x40;
+    /* Reset PD0 and PD2 */
+    Delay(1000);
+    GPIOA->BRR  = 0x40;
   }
 }
 
