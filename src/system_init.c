@@ -24,24 +24,24 @@ void CLK_Config(void)
 // Config ngat cho Timer 2 de xuat du lieu ra
 // Config EXTI de tinh toc do quay cua banh xe
 //------------------------------------------------
-// void NVIC_Config(void)
-// {
-// 	NVIC_InitTypeDef NVIC_InitStruct;
-	
-// 	// NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x00);
+void NVIC_Config(void)
+{
+	NVIC_InitTypeDef NVIC_InitStruct;	
+	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x00);
+
 // 	// NVIC_InitStruct.NVIC_IRQChannel = TIM2_IRQn;
 // 	// NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 0x0f;
 // 	// NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0x0d;
 // 	// NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 // 	// NVIC_Init(&NVIC_InitStruct);
 
-// 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
-// 	NVIC_InitStruct.NVIC_IRQChannel = USART2_IRQn;
-// 	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
-// 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
-// 	NVIC_Init(&NVIC_InitStruct);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
+	NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
+	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
  
-// }
+}
 
 
 //------------------------------------------------
@@ -75,9 +75,9 @@ void GPIO_Config(void)
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 // 	/* Configure USARTy Rx as input floating */
-// 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
-// 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-// 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 // 	/* Configure USARTy Tx as alternate function push-pull */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
@@ -107,7 +107,7 @@ void UART1_Config(void)
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	USART_Init(USART1, &USART_InitStructure);
 	// USART_Cmd(USART1, DISABLE);
-// 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART1, ENABLE);
 }
 

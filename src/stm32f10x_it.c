@@ -24,7 +24,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
 #include "main.h"
-
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
   */
@@ -37,6 +36,8 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern uint16_t RxCounter;
+extern char RxBuffer[MAX_BUF];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -142,6 +143,21 @@ void SysTick_Handler(void)
   TimingDelay_Decrement();
 }
 
+/**
+  * @brief  This function handles Usart1 Handler.
+  * @param  None
+  * @retval None
+  */
+void SIM_IRQHandler(void)
+{
+  char temp;
+  if(USART_GetITStatus(SIM, USART_IT_RXNE) != RESET)
+  {
+    temp = (USART_ReceiveData(SIM) & 0x7F);
+    if( RxCounter < MAX_BUF)
+    RxBuffer[RxCounter++]=temp;
+  }
+}
 /******************************************************************************/
 /*                 STM32F10x Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

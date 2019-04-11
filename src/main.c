@@ -21,7 +21,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "system_init.h"
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
   */
@@ -35,7 +35,9 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
-
+uint16_t RxCounter=0;
+char RxBuffer[MAX_BUF];
+uint16_t i;
 /* Private function prototypes -----------------------------------------------*/
 void Delay(__IO uint32_t nTime);
 
@@ -82,6 +84,7 @@ int main(void)
        - Reload Value should not exceed 0xFFFFFF
    */
   CLK_Config();
+  NVIC_Config();
   GPIO_Config();
   UART1_Config();
   if (SysTick_Config(SystemCoreClock / 1000))
@@ -93,12 +96,18 @@ int main(void)
   while (1)
   {
     Delay(1000);
-    /* Set PD0 and PD2 */
+    /* Set PA6 */
     GPIOA->BSRR = 0x40;
-    /* Reset PD0 and PD2 */
+    if(RxCounter > 40){
+      for(i=40;i>0;i--)
+        putchar(RxBuffer[i]);
+      RxCounter=0;
+      putchar('\r');
+      putchar('\n');
+    }
+    /* Reset PA6 */
     Delay(1000);
     GPIOA->BRR  = 0x40;
-    putchar('A');
   }
 }
 

@@ -25,7 +25,16 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
+#define SIM                   USART1
+#define SIM_GPIO              GPIOA
+#define SIM_CLK               RCC_APB2Periph_USART1
+#define SIM_GPIO_CLK          RCC_APB2Periph_GPIOA
+#define SIM_RxPin             GPIO_Pin_10
+#define SIM_TxPin             GPIO_Pin_9
+#define SIM_IRQn              USART1_IRQn
+#define SIM_IRQHandler        USART1_IRQHandler
 
+#define MAX_BUF 255
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

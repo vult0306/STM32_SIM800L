@@ -6,13 +6,14 @@
 #endif 
 
 #include "stm32f10x.h"
+
 void CLK_Config(void);
 void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
 void UART1_Config(void);
 void putchar(int c);
-void getchar(void);
+
 #ifdef __GNUC__
   /* With GCC/RAISONANCE, small printf (option LD Linker->Libraries->Small printf
      set to 'Yes') calls __io_putchar() */
