@@ -83,6 +83,7 @@ int main(void)
    */
   CLK_Config();
   GPIO_Config();
+  UART1_Config();
   if (SysTick_Config(SystemCoreClock / 1000))
   { 
     /* Capture error */ 
@@ -97,6 +98,7 @@ int main(void)
     /* Reset PD0 and PD2 */
     Delay(1000);
     GPIOA->BRR  = 0x40;
+    putchar('A');
   }
 }
 

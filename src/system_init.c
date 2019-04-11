@@ -15,7 +15,7 @@ void CLK_Config(void)
 	// RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 |
 	// 					   RCC_APB1Periph_USART2, ENABLE);
 	
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1, ENABLE);
 }
 
 
@@ -80,10 +80,10 @@ void GPIO_Config(void)
 // 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 // 	/* Configure USARTy Tx as alternate function push-pull */
-// 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-// 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-// 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-// 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 //------------------------------------------------
@@ -96,27 +96,27 @@ void GPIO_Config(void)
         - Receive and transmit enabled
   */
 //------------------------------------------------
-// void UART1_Config(void)
-// {
-// 	USART_InitTypeDef USART_InitStructure;
-// 	USART_InitStructure.USART_BaudRate = 9600;
-// 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-// 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
-// 	USART_InitStructure.USART_Parity = USART_Parity_No;
-// 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-// 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-// 	USART_Init(USART2, &USART_InitStructure);
-// 	USART_Cmd(USART2, DISABLE);
-// 	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
-// 	USART_Cmd(USART2, ENABLE);
-// }
+void UART1_Config(void)
+{
+	USART_InitTypeDef USART_InitStructure;
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART1, &USART_InitStructure);
+	// USART_Cmd(USART1, DISABLE);
+// 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+	USART_Cmd(USART1, ENABLE);
+}
 
 //------------------------------------------------
 // putchar
 //------------------------------------------------
-// void putchar(int ch)
-// {
-// 	USART_SendData(USART1, (uint8_t) ch);
-// 	/* Loop until the end of transmission */
-// 	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
-// }
+void putchar(int ch)
+{
+	USART_SendData(USART1, (uint8_t) ch);
+	/* Loop until the end of transmission */
+	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
+}
