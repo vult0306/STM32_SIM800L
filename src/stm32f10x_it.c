@@ -39,7 +39,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern uint16_t RxCounter;
-extern char SIM_BUFFER[MAX_BUFFER];
+extern char rx_buf[SIM_BUFFER];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -152,12 +152,12 @@ void SysTick_Handler(void)
   */
 void SIM_IRQHandler(void)
 {
-  char temp;
+  uint16_t temp;
   if(USART_GetITStatus(SIM, USART_IT_RXNE) != RESET)
   {
-    temp = (USART_ReceiveData(SIM) & 0x7F);
-    if( RxCounter < MAX_BUFFER)
-    SIM_BUFFER[RxCounter++]=temp;
+    temp = (char)(USART_ReceiveData(SIM) & 0x1FF);
+        if( RxCounter < SIM_BUFFER)
+            rx_buf[RxCounter++]=temp;
   }
 }
 /******************************************************************************/

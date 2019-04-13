@@ -2,23 +2,40 @@
 #include "system_init.h"
 #include "main.h"
 
-extern char SIM_BUFFER[MAX_BUFFER];
+uint16_t RxCounter=0;
+// extern char SIM_BUFFER[MAX_BUFFER];
 char sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE]="AT+CMGF=x"; //set text mode to module SIM
 char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=x";   //read sms command, x = sms index
 char sim_cmd_dele_sms[LEN_CMD_DELE_SMS]="AT+CMGD=x";   //delete sms command, x = sms index
-char sim_cmd_send_sms[LEN_CMD_SEND_SMS]="AT+CMGS=\"+xxxxxxxxxxx\"";
+char sim_cmd_send_sms[LEN_CMD_SEND_SMS + LEN_PHONE_NUM]="AT+CMGS=\"+xxxxxxxxxxx\"";
 char sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE]="AT+CNMI=0,0,0,0,0"; //do nothing with new sms, let progran handle it
-char sim_cmd_res_ok[LEN_CMD_RESPOND_OK]="\r\nOK\n\r";//respond from module SIM, expected to be "OK"
-char topic[LEN_SUBCRIBED_KEY]="water";           //topic
-char sms_unread[LEN_REC_UNREAD]="REC UNREAD";    //"REC UNREAD"
-char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han, vui long thay loi loc moi*******",
-                                                    "**Dau do khong tiep xuc voi nuoc, vui long kiem tra dau do**",
-                                                    "*********************DANG KY THANH CONG*********************"};
-/*-----------------------------------------------------------------*/
-//find character in buffer, return 255/0 if not found
-int find_c(char* buffer, u8 end1, u8 end2, char c)
+char sim_cmd_res_ok[LEN_CMD_RESPOND_OK]="\r\nOK\r\n";//respond from module SIM, expected to be "OK"
+
+/*-----------------------------------------------------------------
+ * return sms state (read/unread)
+ */
+uint8_t sim_get_sms_state(char* buf)
 {
-    u8 i;
+    char* sms_unread ="REC UNREAD";
+    char* sms_read ="REC READ";
+    uint8_t i;
+    //if this is "REC UNREAD"
+    for(i=0; i<MIN_BUFFER; i++)
+        if( *(buf+i) == '"' ){
+            if( !strcmp(buf+i+1,sms_unread,10 ) )
+                return SMS_UNREAD;
+            else if( !strcmp(buf+i+1,sms_read,8 ) )
+                return SMS_READ;
+        }
+    if( i == MIN_BUFFER )
+        return NO_SMS;
+} 
+/*-----------------------------------------------------------------
+ * find character in buffer, return 255/0 if not found
+ */
+int find_c(char* buffer, uint8_t end1, uint8_t end2, char c)
+{
+    uint8_t i;
     //find forward
     if( end1 <= end2 ){
         end2 = end2-end1;
@@ -41,87 +58,104 @@ int find_c(char* buffer, u8 end1, u8 end2, char c)
 }
 
 
-/*-----------------------------------------------------------------*/
-//read sms
-bool sms_read(u8 sms_idx)
+/*-----------------------------------------------------------------
+ * read sms
+ * return input sms_idx if it is out of range
+ * return respond of module SIM
+ */
+uint8_t sim_read_sms(uint8_t sms_idx, char* buf)
 {
-    if( sms_idx >= MAX_SMS ) return FALSE;
-    memset(SIM_BUFFER,0,sizeof(SIM_BUFFER));        //cleanup buffer first
-    sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=sms_idx+0x30+1;    //set sms index
+    if( sms_idx > MAX_SMS ) return IDX_OOR;
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=sms_idx+0x30;    //set sms index
     push_cmd(sim_cmd_read_sms,LEN_CMD_READ_SMS);    //send cmd to module sim
+    // putchar('\r');
     putchar('\n');
-    Delay(100);
-    return check_sim_res();
+    Delay(1000);
+    return sim_check_res(buf);
 }
 
 
-/*-----------------------------------------------------------------*/
-//delete sms
-bool sms_dele(u8 sms_idx)
+/*-----------------------------------------------------------------
+ * delete sms
+ * return respond of module SIM
+ */
+uint8_t sim_dele_sms(uint8_t sms_idx, char* buf)
 {
-    if( sms_idx >= MAX_SMS ) return FALSE;
-    memset(SIM_BUFFER,0,sizeof(SIM_BUFFER));        //cleanup buffer first
-    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-1]=sms_idx+0x30+1;    //set sms index
+    if( sms_idx >= MAX_SMS ) return IDX_OOR;
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-1]=sms_idx+0x30;    //set sms index
     push_cmd(sim_cmd_dele_sms,LEN_CMD_DELE_SMS);    //send cmd to module sim
+    // putchar('\r');
     putchar('\n');
-    Delay(100);
-    return check_sim_res();
+    Delay(1000);
+    return sim_check_res(buf);
 }
 
 
-/*-----------------------------------------------------------------*/
-//send sms
-bool sms_send(char* phone_number, char* text)
+/*-----------------------------------------------------------------
+ * send sms
+ * return respond of module SIM
+ */
+uint8_t sim_send_sms(char* phone_number, char* text, char* buf)
 {
-    strcpy(sim_cmd_send_sms+9,phone_number,LEN_PHONE_NUM);
-    memset(SIM_BUFFER,0,sizeof(SIM_BUFFER));                //cleanup buffer first
-    push_cmd(sim_cmd_send_sms,LEN_CMD_SEND_SMS);       //send cmd to module sim
+    strcpy(&sim_cmd_send_sms[LEN_CMD_SEND_SMS-1],phone_number,LEN_PHONE_NUM);
+    memset(buf,0,MIN_BUFFER);                //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    push_cmd(sim_cmd_send_sms,LEN_CMD_SEND_SMS+LEN_PHONE_NUM);       //send cmd to module sim
+    // putchar('\r');
     putchar('\n');
-    Delay(100);
+    Delay(1000);
     push_cmd(text,LEN_PUBLISH_MES);
     putchar(26);
-    return check_sim_res();
+    return sim_check_res(buf);
 }
 
 
-/*-----------------------------------------------------------------*/
-//set text/pdu mode for sms
-bool sms_set_text_mode(u8 mode)
+/*-----------------------------------------------------------------
+ * set text/pdu mode for sms
+ * return respond of module SIM
+ */
+uint8_t sim_set_text_mode(uint8_t mode, char* buf)
 {
-    if( mode > 1 ) return FALSE;
-    memset(SIM_BUFFER,0,sizeof(SIM_BUFFER));        //cleanup buffer first
-    sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE-1]=mode+0x30+1;    //set sms index
+    if( mode > 1 ) return IDX_OOR;
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE-1]=mode+0x30;    //set mode index
     push_cmd(sim_cmd_set_text_mode,LEN_CMD_TEXT_MODE);    //send cmd to module sim
+    // putchar('\r');
     putchar('\n');
-    Delay(100);
-    return check_sim_res();
+    Delay(1000);
+    return sim_check_res(buf);
 }
 
 
-/*-----------------------------------------------------------------*/
-//set text/pdu mode for sms
-bool sms_set_cnmi_mode(u8 mode,u8 mt,u8 bm,u8 ds,u8 bfr)
+/*-----------------------------------------------------------------
+ * set behaviour for new message
+ * return respond of module SIM
+ */
+bool sim_set_cnmi_mode(uint8_t mode, uint8_t mt, uint8_t bm, uint8_t ds, uint8_t bfr, char* buf)
 {
-    if( mode > 3 ) return FALSE;
-    if( mt > 3 ) return FALSE;
-    if( bm > 2 ) return FALSE;
-    if( ds > 1 ) return FALSE;
-    if( bfr > 1 ) return FALSE;
- 
-    memset(SIM_BUFFER,0,sizeof(SIM_BUFFER));        //cleanup buffer first
-    sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE-1]=mode+0x30+1;    //set sms index
+    if( (mode > 3) || (mt > 3) || (bm > 2) || (ds > 1) || (bfr > 1) ) return IDX_OOR;
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE-1]=mode+0x30;    //set mode index
     push_cmd(sim_cmd_set_cnmi_mode,LEN_CMD_CNMI_MODE);    //send cmd to module sim
+    // putchar('\r');
     putchar('\n');
-    Delay(100);
-    return check_sim_res();
+    Delay(1000);
+    return sim_check_res(buf);
 }
 
 
-/*-----------------------------------------------------------------*/
-//execute command
-void push_cmd(char* cmd, u8 cmd_len)
+/*-----------------------------------------------------------------
+ * push command to module sim
+ */
+void push_cmd(char* cmd, uint8_t cmd_len)
 {
-    u8 i;
+    uint8_t i;
     for( i=0; i < cmd_len; i++)
     {
         putchar(*(cmd+i));
@@ -129,23 +163,23 @@ void push_cmd(char* cmd, u8 cmd_len)
 }
 
 
-/*-----------------------------------------------------------------*/
-//check sim res
-bool check_sim_res(void)
+/*-----------------------------------------------------------------
+ * check respond status of module sim
+ */
+bool sim_check_res(char* buf)
 {
-  u8 i;
-  for(i=MAX_BUFFER-1;i>0;i--)
-    if(SIM_BUFFER[i]=='\n'){
-      if(!strcmp(&SIM_BUFFER[i]-LEN_CMD_RESPOND_OK+1,sim_cmd_res_ok,LEN_CMD_RESPOND_OK)){
+  uint8_t i;
+  for(i=MIN_BUFFER-1;i>0;i--)
+    if( *(buf + i) == '\n' ){
+      if(!strcmp(buf+i-LEN_CMD_RESPOND_OK+1,sim_cmd_res_ok,LEN_CMD_RESPOND_OK)){
         i=0;
       }
       break;
     }
   if(i==0)
-    return FALSE;
+    return SIM_RES_ERROR;
   else
-    return TRUE;
-  
+    return SIM_RES_OK;
 }
 
 
@@ -153,15 +187,55 @@ bool check_sim_res(void)
 /* extract phone number from a sms message
  * replace ZZ with country code
  */
-struct PHONEBOOK get_phone_num(char* buffer)
+uint8_t sim_get_sms_contact(char* num,char* buf)
 {
-    u8 i,j;
-    struct PHONEBOOK temp={"AT+CMGS=\"+ZZxxxxxxxxx\"",FALSE,FALSE};
+    uint8_t i;
+
+    // struct PHONEBOOK temp={"AT+CMGS=\"+ZZxxxxxxxxx\"",FALSE,FALSE};
     //get phone number
-    for(i=0;i<MAX_BUFFER;i++)
-        if(buffer[i]==',')
-            break;
-    for(j=0;j<LEN_PHONE_NUM-9;j++)
-        temp.SDT[9+j]=buffer[i+j+2];
-    return temp;
+    if( sim_check_res(buf) ){
+        for(i=0;i<MIN_BUFFER;i++)
+            if(buf[i]==',')
+                break;
+        if( i == 0 ) return NO_SMS;
+        strcpy(num,buf+i+2,LEN_PHONE_NUM);
+        return SIM_RES_OK;
+    }
+    else
+    {
+        return SIM_RES_ERROR;
+    }
+    // for(j=0;j<LEN_PHONE_NUM-10;j++)
+    //     temp.SDT[10+j]=buf[i+j+3];
+    // return temp;
 }
+
+/*-----------------------------------------------------------------*/
+/* extract data partion from a sms message
+ * src: respond message from module sim
+ * det: string to contain sms data
+ * return len of data. return 0 if message is empty or exceed
+ * message max size
+ */
+uint8_t sim_get_sms_data(char* data, char* buf)
+{
+    uint8_t i,j;
+    if( sim_check_res(buf) ){
+        for(i=MIN_BUFFER-1; i>0; i--)
+            if( *(buf+i) == '"' ){
+                i+=2;
+                break;
+            }
+        if( i == 0 ) return NO_SMS;
+        for(j=MIN_BUFFER-1; j>0; j--)
+            if( *(buf+j) == '\r' )
+                break;
+        strcpy(data,buf+i,j-i);
+        return SIM_RES_OK;
+    }
+    else
+    {
+        return SIM_RES_ERROR;
+    }
+}
+

@@ -24,22 +24,19 @@
 #include "system_init.h"
 #include "sim800l.h"
 
-char SIM_BUFFER[MAX_BUFFER];
-/** @addtogroup STM32F10x_StdPeriph_Examples
-  * @{
-  */
-
-/** @addtogroup SysTick_TimeBase
-  * @{
-  */ 
-
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+char rx_buf[SIM_BUFFER];
+char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han, vui long thay loi loc moi******",
+                                                    "**Dau do khong tiep xuc voi nuoc, vui long kiem tra dau do*",
+                                                    "*********************DANG KY THANH CONG********************"};
 static __IO uint32_t TimingDelay;
-uint16_t RxCounter=0;
+char topic[LEN_TOPIC]="water";           //topic
+char input_topic[LEN_TOPIC];
+uint8_t ct_wrk;
+struct PHONEBOOK contact[MAX_CLIENT];
+
+
 uint16_t i;
+bool stat;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -51,22 +48,100 @@ uint16_t i;
   */
 int main(void)
 {
-  booting();
+    booting();
+    Delay(2000);
+    while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 )
+    Delay(1000);
+    while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 )
+    Delay(1000);
+    for(i=0;i<MAX_CLIENT;i++)
+    {
+        // contact[i].number[] = "+ZZxxxxxxxxx";
+        contact[i].subscribed = FALSE;
+        contact[i].published = FALSE;
+    }
   while (1)
   {
     Delay(1000);
     GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-    if(RxCounter > 40){
-      for(i=40;i>0;i--)
-        putchar(SIM_BUFFER[i]);
-      RxCounter=0;
-      putchar('\r');
-      putchar('\n');
-    }
+    // if(RxCounter > 40){
+    //   for(i=40;i>0;i--)
+    //     putchar(rx_buf[i]);
+    //   RxCounter=0;
+    //   putchar('\r');
+    //   putchar('\n');
+    // }
+    // for(i=1;i<MAX_SMS;i++)
+    //     stat=sim_read_sms(i,rx_buf);
+    // stat=sim_dele_sms(1,rx_buf);
+    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_WATER_UNSAFE],rx_buf);
+    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_TDS_PROBE_NOWATER],rx_buf);
+    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_SUBSCRIBED_OK],rx_buf);
+    
+    // stat=sim_set_cnmi_mode(0,0,0,0,0,rx_buf);
+    update_phonebook();
     /* Reset PA6 */
     Delay(1000);
     GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
   }
+}
+
+/**
+  * @brief  Inserts a delay time.
+  * @param  nTime: specifies the delay time length, in milliseconds.
+  * @retval None
+  * @this function loop through all sms in memory. 
+  * @>  If message contain valid activating code:
+  * @     - If this is the first time reading (message status is "REC UNREAD"), consider this is
+  * @       the activating message sent from user
+  * @     - Updated to phonebook
+  * @       + If this contact is already in the phonebook -> ignore
+  * @       + If this is a new contact, put into the end of phonebook
+  * @       + respond ok if this message status is "REC UNREAD"
+  * @>  Else if message does not contain activate code -> remove this message
+  */
+void update_phonebook(void){
+    uint8_t i,j;
+    char temp_contact[LEN_PHONE_NUM]="+xxxxxxxxxxx";//no phonenumber, not sent message yet, not in phonebook
+    //go through all sms(read/unread) in sim
+    for(i=1;i<=MAX_SMS;i++)
+    {
+        stat=sim_read_sms(i,rx_buf);
+        //check if message contain activate code
+        if( ((stat & SIM_RES_OK)  != 0 ) && ((sim_get_sms_data(input_topic,rx_buf) & SIM_RES_OK) != 0 ) ){
+            if( !strcmp(topic,input_topic,LEN_TOPIC) )
+            {
+                sim_get_sms_contact(temp_contact,rx_buf);
+
+                for(j=0; j<MAX_CLIENT; j++)
+                {
+                    //if this contact already exist, just ignore it
+                    stat = strcmp(temp_contact,contact[i].number,LEN_PHONE_NUM);
+                    if( stat == TRUE)
+                        break;
+
+                    //this is new contact, push it to the end of phonebook
+                    if( contact[j].subscribed == FALSE ){
+                        contact[j].subscribed = TRUE;
+                        contact[j].published = FALSE;
+                        strcpy(contact[j].number,temp_contact,LEN_PHONE_NUM);
+                        break;
+                    }
+
+                }
+
+                //if this is "REC UNREAD"
+                if( sim_get_sms_state(rx_buf) == SMS_UNREAD )
+                    if( (sim_send_sms(contact[j].number,publish_mes[PUBLISH_SUBSCRIBED_OK],rx_buf) & SIM_RES_OK) !=0 )
+                        contact[j].subscribed = TRUE;
+            }
+            //this is a trash message, remove it
+            else
+            {
+                sim_dele_sms(i,rx_buf);
+            }
+        }
+    }
 }
 
 /**

@@ -34,12 +34,24 @@
 #define SIM_IRQn              USART1_IRQn
 #define SIM_IRQHandler        USART1_IRQHandler
 
+#define MAX_SMS 35
+#define MAX_CLIENT 10
+#define LEN_TOPIC      5
+#define SIM_BUFFER MIN_BUFFER
+
+#define MAX_PUBLISH_MES 3
+#define PUBLISH_WATER_UNSAFE 0
+#define PUBLISH_TDS_PROBE_NOWATER 1
+#define PUBLISH_SUBSCRIBED_OK 2
+#define LEN_PUBLISH_MES 60
+
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void TimingDelay_Decrement(void);
 void Delay(__IO uint32_t);
+void update_phonebook(void);
 // void Delay(__IO uint32_t nTime);
 #endif /* __MAIN_H */
 
