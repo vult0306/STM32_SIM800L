@@ -3,7 +3,7 @@
 //------------------------------------------------
 #include "system_init.h"
 #include "stm32f10x.h"
-
+static __IO uint32_t TimingDelay;
 //------------------------------------------------
 // booting the system
 // Cau hinh cac module can su dung
@@ -153,25 +153,23 @@ void putchar(int ch)
 // if Return value > 0 then it indicates Y is less than X.
 // if Return value = 0 then it indicates X is equal to Y.
 //------------------------------------------------
-bool strcmp(char*s1,char*s2,u8 len){
-    bool flag = TRUE;
+uint8_t strcmp(char*s1,char*s2,u8 len){
     while(len>0){
-        len-=1;
-        if( *(s1+len) != *(s2+len) ){
-            flag = FALSE;
+        if( *(s1+len-1) != *(s2+len-1) ){
             break;
         }
+        len-=1;
     }
-    return flag;
+    return len;
 }
 
 
 //------------------------------------------------
 // strcpy
 //------------------------------------------------
-void strcpy(char*s1,char*s2,u8 len){
+void strcpy(char* des,char* src,u8 len){
   while(len>0){
-    *(s1+len-1) = *(s2+len-1);
+    *(des+len-1) = *(src+len-1);
     len-=1;
   }
   return;
@@ -189,4 +187,29 @@ void memset(void* str, char ch, u16 n){
 	for(i=0; i<n; i++)
 		s[i]=ch;
     return;
+}
+
+/**
+  * @brief  Inserts a delay time.
+  * @param  nTime: specifies the delay time length, in milliseconds.
+  * @retval None
+  */
+void Delay(__IO uint32_t nTime)
+{ 
+  TimingDelay = nTime;
+
+  while(TimingDelay != 0);
+}
+
+/**
+  * @brief  Decrements the TimingDelay variable.
+  * @param  None
+  * @retval None
+  */
+void TimingDelay_Decrement(void)
+{
+  if (TimingDelay != 0x00)
+  { 
+    TimingDelay--;
+  }
 }

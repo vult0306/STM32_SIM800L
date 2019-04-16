@@ -5,6 +5,7 @@
 
 /* uC-SIM buffer */
 #define MIN_BUFFER 255
+#define MAX_SMS 35
 
 /* define SIM command */
 #define IDX_CMD_MAX             6
@@ -17,12 +18,12 @@
 
 #define LEN_PHONE_NUM           12
 #define LEN_CMD_TEXT_MODE       9                     //length of text mode command
-#define LEN_CMD_READ_SMS        9                      //length of read sms command
-#define LEN_CMD_DELE_SMS        9                      //length of delete sms command
+#define LEN_CMD_READ_SMS        10                      //length of read sms command
+#define LEN_CMD_DELE_SMS        10                      //length of delete sms command
 #define LEN_CMD_SEND_SMS        10
 #define LEN_CMD_CNMI_MODE       17                    //length of CNMI command
 #define LEN_CMD_RESPOND_OK      6                    //length of respond from module SIM
-
+#define LEN_PUBLISH_MES         60
 /* define message code */
 #define SMS_READ 0
 #define SMS_UNREAD 1

@@ -1,1 +1,1 @@
-whenever the module is power up, it send the activating response to customer again
+run on STM32F103C8T6

@@ -28,15 +28,17 @@ char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han, vui long thay loi loc moi******",
                                                     "**Dau do khong tiep xuc voi nuoc, vui long kiem tra dau do*",
                                                     "*********************DANG KY THANH CONG********************"};
-static __IO uint32_t TimingDelay;
 char topic[LEN_TOPIC]="water";           //topic
 char input_topic[LEN_TOPIC];
-uint8_t ct_wrk;
 struct PHONEBOOK contact[MAX_CLIENT];
+uint16_t Conversion_Value;
+int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
+int analogBufferTemp[SCOUNT];
+int analogBufferIndex = 0,copyIndex = 0;
+float averageVoltage = 0,tdsValue = 0,temperature = 25;
+float compensationCoefficient;
+float compensationVolatge;
 
-
-uint16_t i;
-bool stat;
 /* Private function prototypes -----------------------------------------------*/
 
 /* Private functions ---------------------------------------------------------*/
@@ -48,37 +50,23 @@ bool stat;
   */
 int main(void)
 {
+    uint8_t i;
     booting();
     Delay(2000);
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 )
-    Delay(1000);
+        Delay(1000);
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 )
-    Delay(1000);
+        Delay(1000);
     for(i=0;i<MAX_CLIENT;i++)
     {
-        // contact[i].number[] = "+ZZxxxxxxxxx";
-        contact[i].subscribed = FALSE;
-        contact[i].published = FALSE;
+        memset(contact[i].number,'x',LEN_PHONE_NUM);
+        contact[i].subscribed   = FALSE;
+        contact[i].published    = FALSE;
     }
   while (1)
   {
     Delay(1000);
     GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-    // if(RxCounter > 40){
-    //   for(i=40;i>0;i--)
-    //     putchar(rx_buf[i]);
-    //   RxCounter=0;
-    //   putchar('\r');
-    //   putchar('\n');
-    // }
-    // for(i=1;i<MAX_SMS;i++)
-    //     stat=sim_read_sms(i,rx_buf);
-    // stat=sim_dele_sms(1,rx_buf);
-    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_WATER_UNSAFE],rx_buf);
-    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_TDS_PROBE_NOWATER],rx_buf);
-    // stat=sim_send_sms("+84975738366",publish_mes[PUBLISH_SUBSCRIBED_OK],rx_buf);
-    
-    // stat=sim_set_cnmi_mode(0,0,0,0,0,rx_buf);
     update_phonebook();
     /* Reset PA6 */
     Delay(1000);
@@ -102,13 +90,17 @@ int main(void)
   */
 void update_phonebook(void){
     uint8_t i,j;
+    uint32_t stat;
     char temp_contact[LEN_PHONE_NUM]="+xxxxxxxxxxx";//no phonenumber, not sent message yet, not in phonebook
+    char temp_data[MIN_BUFFER];
     //go through all sms(read/unread) in sim
     for(i=1;i<=MAX_SMS;i++)
     {
         stat=sim_read_sms(i,rx_buf);
         //check if message contain activate code
-        if( ((stat & SIM_RES_OK)  != 0 ) && ((sim_get_sms_data(input_topic,rx_buf) & SIM_RES_OK) != 0 ) ){
+        if( ((stat & SIM_RES_OK)  != 0 ) && ((sim_get_sms_data(temp_data,rx_buf) & SIM_RES_OK) != 0 ) )
+        {
+            strcpy(input_topic,temp_data,LEN_TOPIC);
             if( !strcmp(topic,input_topic,LEN_TOPIC) )
             {
                 sim_get_sms_contact(temp_contact,rx_buf);
@@ -116,8 +108,7 @@ void update_phonebook(void){
                 for(j=0; j<MAX_CLIENT; j++)
                 {
                     //if this contact already exist, just ignore it
-                    stat = strcmp(temp_contact,contact[i].number,LEN_PHONE_NUM);
-                    if( stat == TRUE)
+                    if( !strcmp(temp_contact,contact[j].number,LEN_PHONE_NUM) )
                         break;
 
                     //this is new contact, push it to the end of phonebook
@@ -142,31 +133,6 @@ void update_phonebook(void){
             }
         }
     }
-}
-
-/**
-  * @brief  Inserts a delay time.
-  * @param  nTime: specifies the delay time length, in milliseconds.
-  * @retval None
-  */
-void Delay(__IO uint32_t nTime)
-{ 
-  TimingDelay = nTime;
-
-  while(TimingDelay != 0);
-}
-
-/**
-  * @brief  Decrements the TimingDelay variable.
-  * @param  None
-  * @retval None
-  */
-void TimingDelay_Decrement(void)
-{
-  if (TimingDelay != 0x00)
-  { 
-    TimingDelay--;
-  }
 }
 
 #ifdef  USE_FULL_ASSERT

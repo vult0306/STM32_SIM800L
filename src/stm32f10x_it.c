@@ -25,6 +25,7 @@
 #include "stm32f10x_it.h"
 #include "main.h"
 #include "sim800l.h"
+#include "system_init.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Examples
   * @{
@@ -150,12 +151,12 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
-void SIM_IRQHandler(void)
+void USART1_IRQHandler(void)
 {
   uint16_t temp;
-  if(USART_GetITStatus(SIM, USART_IT_RXNE) != RESET)
+  if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
   {
-    temp = (char)(USART_ReceiveData(SIM) & 0x1FF);
+    temp = (char)(USART_ReceiveData(USART1) & 0x1FF);
         if( RxCounter < SIM_BUFFER)
             rx_buf[RxCounter++]=temp;
   }
