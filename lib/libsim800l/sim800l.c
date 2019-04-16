@@ -4,7 +4,7 @@
 uint16_t RxCounter=0;
 // extern char SIM_BUFFER[MAX_BUFFER];
 char sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE]="AT+CMGF=x"; //set text mode to module SIM
-char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=xx";   //read sms command, x = sms index
+char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=xx,x";   //read sms command, x = sms index
 char sim_cmd_dele_sms[LEN_CMD_DELE_SMS]="AT+CMGD=xx";   //delete sms command, x = sms index
 char sim_cmd_send_sms[LEN_CMD_SEND_SMS + LEN_PHONE_NUM]="AT+CMGS=\"+xxxxxxxxxxx\"";
 char sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE]="AT+CNMI=0,0,0,0,0"; //do nothing with new sms, let progran handle it
@@ -62,14 +62,17 @@ int find_c(char* buffer, uint8_t end1, uint8_t end2, char c)
  * return input sms_idx if it is out of range
  * return respond of module SIM
  */
-uint8_t sim_read_sms(uint8_t sms_idx, char* buf)
+uint8_t sim_read_sms(uint8_t sms_idx, uint8_t mode, char* buf)
 {
     if( sms_idx > MAX_SMS ) return IDX_OOR;
+    if( mode > 1 ) return IDX_OOR;
+
     memset(buf,0,MIN_BUFFER);        //cleanup buffer first
     RxCounter=0;                     //reset received buffer counter
     memset(&sim_cmd_read_sms[LEN_CMD_READ_SMS-2],'0',2);
-    sim_cmd_read_sms[LEN_CMD_READ_SMS-2]=sms_idx/10+0x30;    //set sms index
-    sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=sms_idx%10+0x30;    //set sms index
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-4]=sms_idx/10+0x30;    //set sms index
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-3]=sms_idx%10+0x30;    //set sms index
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=mode+0x30;    //set sms index
     push_cmd(sim_cmd_read_sms,LEN_CMD_READ_SMS);    //send cmd to module sim
     putchar('\n');
     Delay(1000);
@@ -140,7 +143,7 @@ bool sim_set_cnmi_mode(uint8_t mode, uint8_t mt, uint8_t bm, uint8_t ds, uint8_t
     if( (mode > 3) || (mt > 3) || (bm > 2) || (ds > 1) || (bfr > 1) ) return IDX_OOR;
     memset(buf,0,MIN_BUFFER);        //cleanup buffer first
     RxCounter=0;                     //reset received buffer counter
-    sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE-1]=mode+0x30;    //set mode index
+    sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE-9]=mode+0x30;    //set mode index
     push_cmd(sim_cmd_set_cnmi_mode,LEN_CMD_CNMI_MODE);    //send cmd to module sim
     putchar('\n');
     Delay(1000);

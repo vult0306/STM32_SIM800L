@@ -18,7 +18,7 @@
 
 #define LEN_PHONE_NUM           12
 #define LEN_CMD_TEXT_MODE       9                     //length of text mode command
-#define LEN_CMD_READ_SMS        10                      //length of read sms command
+#define LEN_CMD_READ_SMS        12                      //length of read sms command
 #define LEN_CMD_DELE_SMS        10                      //length of delete sms command
 #define LEN_CMD_SEND_SMS        10
 #define LEN_CMD_CNMI_MODE       17                    //length of CNMI command
@@ -35,14 +35,7 @@
 #define IDX_OOR               0x8
 #define LEN_OOR               0x10
 
-/* manage contact */
-struct PHONEBOOK {
-  char number[LEN_PHONE_NUM];                //contact number including send sms command
-  bool subscribed;                       //this contact subscribed to receive message
-  bool published;                       //published warning/activating code to this contact
-};
-
-uint8_t sim_read_sms(uint8_t, char*);
+uint8_t sim_read_sms(uint8_t, uint8_t, char*);
 uint8_t sim_dele_sms(uint8_t, char*);
 uint8_t sim_send_sms(char*, char*, char*);
 uint8_t sim_set_text_mode(uint8_t,char*);

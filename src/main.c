@@ -30,13 +30,15 @@ char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han,
                                                     "*********************DANG KY THANH CONG********************"};
 char topic[LEN_TOPIC]="water";           //topic
 char input_topic[LEN_TOPIC];
+uint8_t tds_over_range=0,tds_under_range=0;
 struct PHONEBOOK contact[MAX_CLIENT];
-uint16_t Conversion_Value;
-int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
-int analogBufferTemp[SCOUNT];
-int analogBufferIndex = 0,copyIndex = 0;
 float averageVoltage = 0,tdsValue = 0,temperature = 25;
-float compensationCoefficient;
+extern __IO uint16_t Conversion_Value;
+uint16_t adc_value;
+
+    uint8_t analogBufferIndex;
+    int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
+    float compensationCoefficient;
 float compensationVolatge;
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,45 +55,77 @@ int main(void)
     uint8_t i;
     booting();
     Delay(2000);
-    while(1){
-        Delay(1000);
-        GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-        putchar(Conversion_Value*255/4096);
 
-        {
-            // ADC_RegularChannelConfig(ADC1,ADC_Channel_8,1,ADC_SampleTime_55Cycles5);    // Cau hinh kenh chuyen doi Regular
-            ADC_SoftwareStartConvCmd(ADC1, ENABLE);                                   // Bat dau qua trinh chuyen doi
-            while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);                    // Cho qua trinh chuyen doi ket thuc
-            ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
-            ADC_SoftwareStartConvCmd(ADC1, DISABLE);                                  // Khong cho phep chuyen doi
-            Conversion_Value = ADC_GetConversionValue(ADC1);                                      // Tra ve gia tri ADC 
-        }
-    }
-    while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 )
-        Delay(1000);
-    while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 )
-        Delay(1000);
+    //interact with sim via text mode
+    while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 );
+    Delay(1000);
+    //do not generate interrupt when new sms comes
+    while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 );
+    Delay(1000);
+    //free phonebook
     for(i=0;i<MAX_CLIENT;i++)
     {
         memset(contact[i].number,'x',LEN_PHONE_NUM);
-        contact[i].subscribed   = FALSE;
-        contact[i].published    = FALSE;
+        contact[i].stat   = 0;
     }
-  while (1)
-  {
-    Delay(1000);
-    GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-    update_phonebook();
-    /* Reset PA6 */
-    Delay(1000);
-    GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-  }
+
+    while (1)
+    {
+        Delay(1000);
+        update_phonebook();
+        Delay(1000);
+
+        tds_over_range=0;
+        tds_under_range=0;
+        for(i=0;i<TDS_MEASURE_REPEAT;i++){
+            Delay(1000);
+            read_tds();
+            if(tdsValue>TDS_LIMIT){
+                tds_over_range++;
+            }
+            else if(tdsValue == 0){
+                tds_under_range++;
+            }
+        }
+        if( (tds_over_range == TDS_MEASURE_REPEAT) || (tds_under_range == TDS_MEASURE_REPEAT) )
+            inform_customer();
+
+        // GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
+    }
 }
 
+
+/*-----------------------------------------------------------------*/
+/*
+ * this function send out warning message to customer if the probe
+ * is not plugged into water or the TDS value is bigger the limittation
+ */
+void inform_customer(void)
+{
+    uint8_t i;
+    for( i=0; i<MAX_CLIENT; i++ )
+    {
+        //subscribed contact
+        if( (contact[i].stat & SUBSCONFIRMEDF) != 0 )
+        {
+            //water unsafe not sent yet
+            if( (tds_over_range == TDS_MEASURE_REPEAT) && ((contact[i].stat & UNSAFEF) == 0) )
+            {
+                if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_WATER_UNSAFE],rx_buf) & SIM_RES_OK) !=0 )
+                    contact[i].stat |= UNSAFEF;
+            }
+            //tds probe is not digged into water
+            else if( (tds_under_range == TDS_MEASURE_REPEAT) && ((contact[i].stat & UNDIGF) == 0) )
+            {
+                if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_TDS_PROBE_NOWATER],rx_buf) & SIM_RES_OK) !=0 )
+                    contact[i].stat |= UNDIGF;
+            }
+        }
+    }
+}
+
+
 /**
-  * @brief  Inserts a delay time.
-  * @param  nTime: specifies the delay time length, in milliseconds.
-  * @retval None
   * @this function loop through all sms in memory. 
   * @>  If message contain valid activating code:
   * @     - If this is the first time reading (message status is "REC UNREAD"), consider this is
@@ -110,7 +144,7 @@ void update_phonebook(void){
     //go through all sms(read/unread) in sim
     for(i=1;i<=MAX_SMS;i++)
     {
-        stat=sim_read_sms(i,rx_buf);
+        stat=sim_read_sms(i,1,rx_buf); // not change status of sms record (if it is REC UNREAD, it is still REC UNREAD)
         //check if message contain activate code
         if( ((stat & SIM_RES_OK)  != 0 ) && ((sim_get_sms_data(temp_data,rx_buf) & SIM_RES_OK) != 0 ) )
         {
@@ -126,9 +160,7 @@ void update_phonebook(void){
                         break;
 
                     //this is new contact, push it to the end of phonebook
-                    if( contact[j].subscribed == FALSE ){
-                        contact[j].subscribed = TRUE;
-                        contact[j].published = FALSE;
+                    if( (contact[j].stat & SUBSCONFIRMEDF) == 0 ){
                         strcpy(contact[j].number,temp_contact,LEN_PHONE_NUM);
                         break;
                     }
@@ -137,8 +169,11 @@ void update_phonebook(void){
 
                 //if this is "REC UNREAD"
                 if( sim_get_sms_state(rx_buf) == SMS_UNREAD )
+                {
                     if( (sim_send_sms(contact[j].number,publish_mes[PUBLISH_SUBSCRIBED_OK],rx_buf) & SIM_RES_OK) !=0 )
-                        contact[j].subscribed = TRUE;
+                        contact[j].stat |= SUBSCONFIRMEDF;
+                    stat=sim_read_sms(i,0,rx_buf); // re-read this sms to change it's status to REC READ)
+                }
             }
             //this is a trash message, remove it
             else
@@ -147,6 +182,70 @@ void update_phonebook(void){
             }
         }
     }
+}
+
+
+/**
+  * @this function read adc value.
+  */
+uint16_t read_adc(void)
+{
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);                                   // start conversion
+    while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);                    // end of conversion
+    ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
+    ADC_SoftwareStartConvCmd(ADC1, DISABLE);                                  // disable conversino
+    return ADC_GetConversionValue(ADC1);                                      // return ADC value 
+}
+
+/**
+  * @this function calculate tds value from the ADC red from read_adc() function.
+  */
+void read_tds(void)
+{
+    // uint8_t analogBufferIndex;
+    // int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
+    // float compensationCoefficient;
+    // float compensationVolatge;
+
+    for( analogBufferIndex=0; analogBufferIndex < SCOUNT; analogBufferIndex++)
+    {
+        analogBuffer[analogBufferIndex] = read_adc();
+        Delay(50);//delay 50ms
+    }
+
+    // read the analog value more stable by the median filtering
+    // algorithm, and convert to voltage value
+    averageVoltage = getMedianNum(analogBuffer) * (float)VREF / 4096.0; //ADC 12 bits
+    //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0));
+    compensationCoefficient=1.0+0.02*(temperature-25.0);
+    compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
+    //convert voltage value to tds value
+    tdsValue=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
+}
+
+int getMedianNum(int* bArray) 
+{
+    int i, j, bTemp;
+    int bTab[SCOUNT];
+      for (i = 0; i<SCOUNT; i++)
+	  bTab[i] = bArray[i];
+      for (j = 0; j < SCOUNT - 1; j++) 
+      {
+	  for (i = 0; i < SCOUNT - j - 1; i++) 
+          {
+	    if (bTab[i] > bTab[i + 1]) 
+            {
+		bTemp = bTab[i];
+	        bTab[i] = bTab[i + 1];
+		bTab[i + 1] = bTemp;
+	     }
+	  }
+      }
+      if ((SCOUNT & 1) > 0)
+	bTemp = bTab[(SCOUNT - 1) / 2];
+      else
+	bTemp = (bTab[SCOUNT / 2] + bTab[SCOUNT / 2 - 1]) / 2;
+      return bTemp;
 }
 
 #ifdef  USE_FULL_ASSERT

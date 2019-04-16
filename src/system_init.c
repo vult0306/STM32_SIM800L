@@ -2,7 +2,7 @@
 // INCLUDE
 //------------------------------------------------
 #include "system_init.h"
-#include "stm32f10x.h"
+
 static __IO uint32_t TimingDelay;
 //------------------------------------------------
 // booting the system
@@ -204,7 +204,7 @@ void ADC1_Config(void)
     ADC_InitStructure.ADC_NbrOfChannel = 1;
     ADC_Init(ADC1, &ADC_InitStructure);
 
-    /* ADC1 regular channel14 configuration */ 
+    /* ADC1 regular channel08 configuration */ 
     ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_55Cycles5);
 
     /* Enable ADC1 DMA */
