@@ -53,6 +53,11 @@ int main(void)
     uint8_t i;
     booting();
     Delay(2000);
+    while(1){
+        Delay(1000);
+        GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
+        putchar('a');
+    }
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 )
         Delay(1000);
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 )

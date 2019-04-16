@@ -49,6 +49,9 @@ void booting(void)
 	NVIC_Config();
 	GPIO_Config();
 	UART1_Config();
+#if defined DEBUG
+    UART2_Config();
+#endif
 	if (SysTick_Config(SystemCoreClock / 1000))
 	{ 
 		/* Capture error */ 
@@ -63,10 +66,11 @@ void booting(void)
 // Cau hinh clock cua cac module can su dung
 //------------------------------------------------
 void CLK_Config(void)
-{
-	// RCC_PCLK2Config(RCC_HCLK_Div1);
-	
+{	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1, ENABLE);
+#if defined DEBUG
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+#endif
 }
 
 
@@ -82,7 +86,10 @@ void NVIC_Config(void)
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 	NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
-	NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+#if defined DEBUG
+	NVIC_InitStruct.NVIC_IRQChannel |= USART2_IRQn;
+#endif
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
  
@@ -111,6 +118,11 @@ void GPIO_Config(void)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+#if defined DEBUG
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+#endif
 }
 
 //------------------------------------------------
@@ -137,14 +149,46 @@ void UART1_Config(void)
 	USART_Cmd(USART1, ENABLE);
 }
 
+#if defined DEBUG
+//------------------------------------------------
+  /* USARTx configured as follow:
+        - BaudRate = 115200 baud  
+        - Word Length = 8 Bits
+        - One Stop Bit
+        - No parity
+        - Hardware flow control disabled (RTS and CTS signals)
+        - Receive and transmit enabled
+  */
+//------------------------------------------------
+void UART2_Config(void)
+{
+	USART_InitTypeDef USART_InitStructure;
+	USART_InitStructure.USART_BaudRate = 9600;
+	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure.USART_Parity = USART_Parity_No;
+	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+	USART_Init(USART2, &USART_InitStructure);
+	// USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+	USART_Cmd(USART2, ENABLE);
+}
+#endif
+
 //------------------------------------------------
 // putchar
 //------------------------------------------------
 void putchar(int ch)
 {
+#if defined DEBUG
+	USART_SendData(USART2, (uint8_t) ch);
+	/* Loop until the end of transmission */
+	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){};
+#else
 	USART_SendData(USART1, (uint8_t) ch);
 	/* Loop until the end of transmission */
 	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
+#endif
 }
 
 //------------------------------------------------

@@ -6,6 +6,9 @@
 #endif 
 
 #include "stm32f10x.h"
+
+#define DEBUG
+
 #define SIM                   USART1
 #define SIM_GPIO              GPIOA
 #define SIM_CLK               RCC_APB2Periph_USART1
@@ -21,6 +24,9 @@ void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
 void UART1_Config(void);
+#if defined DEBUG
+void UART2_Config(void);
+#endif
 void putchar(int c);
 uint8_t strcmp(char*,char*,u8);
 void strcpy(char*,char*,u8);
