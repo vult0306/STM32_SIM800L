@@ -161,6 +161,28 @@ void USART1_IRQHandler(void)
             rx_buf[RxCounter++]=temp;
   }
 }
+
+#if defined DEBUG
+/**
+  * @brief  This function handles Usart1 Handler.
+  * @param  None
+  * @retval None
+  */
+void USART2_IRQHandler(void)
+{
+  uint16_t temp;
+//   if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
+//   {
+//     temp = (char)(USART_ReceiveData(USART2) & 0x1FF);
+//         if( RxCounter < SIM_BUFFER)
+//             rx_buf[RxCounter++]=temp;
+//   }
+  if(USART_GetITStatus(USART2, USART_FLAG_TC) != RESET)
+  {
+      USART_ClearFlag(USART2,USART_FLAG_TC);
+  }
+}
+#endif
 /******************************************************************************/
 /*                 STM32F10x Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

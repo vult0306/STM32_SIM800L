@@ -52,6 +52,10 @@ void booting(void)
 #if defined DEBUG
     UART2_Config();
 #endif
+#if defined ADC
+    ADC1_Config();
+#endif
+
 	if (SysTick_Config(SystemCoreClock / 1000))
 	{ 
 		/* Capture error */ 
@@ -68,6 +72,9 @@ void booting(void)
 void CLK_Config(void)
 {	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1, ENABLE);
+#if defined ADC
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOB, ENABLE);
+#endif
 #if defined DEBUG
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
 #endif
@@ -123,6 +130,12 @@ void GPIO_Config(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 #endif
+#if defined ADC
+    /* Configure PB.00 (ADC Channel08) as analog input -------------------------*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+#endif
 }
 
 //------------------------------------------------
@@ -170,8 +183,45 @@ void UART2_Config(void)
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	USART_Init(USART2, &USART_InitStructure);
-	// USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+	USART_ITConfig(USART2, USART_IT_RXNE | USART_FLAG_TC, ENABLE);
 	USART_Cmd(USART2, ENABLE);
+}
+#endif
+
+#if defined ADC
+//------------------------------------------------
+  /* ADC1 configured as follow:
+  */
+//------------------------------------------------
+void ADC1_Config(void)
+{
+    ADC_InitTypeDef ADC_InitStructure;
+    ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+    ADC_InitStructure.ADC_ScanConvMode = ENABLE;
+    ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+    ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+    ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+    ADC_InitStructure.ADC_NbrOfChannel = 1;
+    ADC_Init(ADC1, &ADC_InitStructure);
+
+    /* ADC1 regular channel14 configuration */ 
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 1, ADC_SampleTime_55Cycles5);
+
+    /* Enable ADC1 DMA */
+    ADC_DMACmd(ADC1, ENABLE);
+    
+    /* Enable ADC1 */
+    ADC_Cmd(ADC1, ENABLE);
+
+    /* Enable ADC1 reset calibration register */   
+    ADC_ResetCalibration(ADC1);
+    /* Check the end of ADC1 reset calibration register */
+    while(ADC_GetResetCalibrationStatus(ADC1));
+
+    /* Start ADC1 calibration */
+    ADC_StartCalibration(ADC1);
+    /* Check the end of ADC1 calibration */
+    while(ADC_GetCalibrationStatus(ADC1));
 }
 #endif
 
@@ -181,9 +231,10 @@ void UART2_Config(void)
 void putchar(int ch)
 {
 #if defined DEBUG
-	USART_SendData(USART2, (uint8_t) ch);
+    USART_SendData(USART2, (uint16_t)ch);
 	/* Loop until the end of transmission */
-	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){};
+	while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET){};
+
 #else
 	USART_SendData(USART1, (uint8_t) ch);
 	/* Loop until the end of transmission */

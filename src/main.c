@@ -56,7 +56,16 @@ int main(void)
     while(1){
         Delay(1000);
         GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
-        putchar('a');
+        putchar(Conversion_Value*255/4096);
+
+        {
+            // ADC_RegularChannelConfig(ADC1,ADC_Channel_8,1,ADC_SampleTime_55Cycles5);    // Cau hinh kenh chuyen doi Regular
+            ADC_SoftwareStartConvCmd(ADC1, ENABLE);                                   // Bat dau qua trinh chuyen doi
+            while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET);                    // Cho qua trinh chuyen doi ket thuc
+            ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
+            ADC_SoftwareStartConvCmd(ADC1, DISABLE);                                  // Khong cho phep chuyen doi
+            Conversion_Value = ADC_GetConversionValue(ADC1);                                      // Tra ve gia tri ADC 
+        }
     }
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 )
         Delay(1000);
