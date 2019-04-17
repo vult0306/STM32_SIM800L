@@ -28,7 +28,7 @@
 #include "sim800l.h"
 
 #define MAX_CLIENT 10
-#define LEN_TOPIC      5
+#define LEN_TOPIC      12
 #define SIM_BUFFER MIN_BUFFER
 
 #define MAX_PUBLISH_MES 3
@@ -63,7 +63,7 @@ void inform_customer(void);
 
 uint16_t read_adc(void);
 int getMedianNum(int*);
-// void Delay(__IO uint32_t nTime);
+
 #endif /* __MAIN_H */
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

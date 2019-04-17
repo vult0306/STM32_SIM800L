@@ -27,11 +27,12 @@ void GPIO_Config(void);
 void UART1_Config(void);
 #if defined DEBUG
 void UART2_Config(void);
+void printf(int);
 #endif
 #if defined ADC
 void ADC1_Config(void);
 #endif
-void putchar(int c);
+void putchar(int);
 uint8_t strcmp(char*,char*,u8);
 void strcpy(char*,char*,u8);
 void memset(void*,char,u16);

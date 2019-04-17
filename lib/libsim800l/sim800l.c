@@ -2,7 +2,8 @@
 #include "system_init.h"
 
 uint16_t RxCounter=0;
-// extern char SIM_BUFFER[MAX_BUFFER];
+
+char sim_cmd_signal_strenth[LEN_CMD_SIG_STR]="AT+CSQ=?";
 char sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE]="AT+CMGF=x"; //set text mode to module SIM
 char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=xx,x";   //read sms command, x = sms index
 char sim_cmd_dele_sms[LEN_CMD_DELE_SMS]="AT+CMGD=xx";   //delete sms command, x = sms index
@@ -28,7 +29,9 @@ uint8_t sim_get_sms_state(char* buf)
         }
     if( i == MIN_BUFFER )
         return NO_SMS;
-} 
+}
+
+
 /*-----------------------------------------------------------------
  * find character in buffer, return 255/0 if not found
  */
@@ -163,6 +166,40 @@ void push_cmd(char* cmd, uint8_t cmd_len)
     }
 }
 
+/*-----------------------------------------------------------------
+ * check signal strength
+ */
+uint8_t sim_signal_strength(char* buf)
+{
+    uint8_t i;
+    uint8_t signal_strength;
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    push_cmd(sim_cmd_signal_strenth,LEN_CMD_SIG_STR);    //send cmd to module sim
+    putchar('\n');
+    Delay(1000);
+    if(sim_check_res(buf))
+    {
+        for(i=0;i<MIN_BUFFER;i++)
+        {
+            if(buf[i]==':')
+            {
+                i+=2;
+                if(buf[i+1]==',')
+                    signal_strength = buf[i]-0x30;
+                else
+                    signal_strength = 10*(buf[i]-0x30) + (buf[i+1]-0x30);
+                
+                return signal_strength;
+            }
+        }	
+    }
+    else
+    {
+        return SIM_RES_ERROR;
+    }
+    
+}
 
 /*-----------------------------------------------------------------
  * check respond status of module sim

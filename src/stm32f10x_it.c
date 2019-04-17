@@ -143,7 +143,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  TimingDelay_Decrement();
+    TimingDelay_Decrement();
 }
 
 /**
@@ -153,13 +153,13 @@ void SysTick_Handler(void)
   */
 void USART1_IRQHandler(void)
 {
-  uint16_t temp;
-  if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
-  {
-    temp = (char)(USART_ReceiveData(USART1) & 0x1FF);
-        if( RxCounter < SIM_BUFFER)
-            rx_buf[RxCounter++]=temp;
-  }
+    uint16_t temp;
+    if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+    {
+        temp = (char)(USART_ReceiveData(USART1) & 0x1FF);
+            if( RxCounter < SIM_BUFFER)
+                rx_buf[RxCounter++]=temp;
+    }
 }
 
 #if defined DEBUG
@@ -170,17 +170,15 @@ void USART1_IRQHandler(void)
   */
 void USART2_IRQHandler(void)
 {
-  uint16_t temp;
-//   if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
-//   {
-//     temp = (char)(USART_ReceiveData(USART2) & 0x1FF);
-//         if( RxCounter < SIM_BUFFER)
-//             rx_buf[RxCounter++]=temp;
-//   }
-  if(USART_GetITStatus(USART2, USART_FLAG_TC) != RESET)
-  {
-      USART_ClearFlag(USART2,USART_FLAG_TC);
-  }
+    char temp;
+    if(USART_GetITStatus(USART2, USART_FLAG_RXNE) != RESET)
+    {
+        temp = (char)(USART_ReceiveData(USART2) & 0x1FF);
+    }
+    if(USART_GetITStatus(USART2, USART_FLAG_TC) != RESET)
+    {
+        USART_ClearFlag(USART2,USART_FLAG_TC);
+    }
 }
 #endif
 /******************************************************************************/

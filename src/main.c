@@ -28,18 +28,10 @@ char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han, vui long thay loi loc moi******",
                                                     "**Dau do khong tiep xuc voi nuoc, vui long kiem tra dau do*",
                                                     "*********************DANG KY THANH CONG********************"};
-char topic[LEN_TOPIC]="water";           //topic
-char input_topic[LEN_TOPIC];
-uint8_t tds_over_range=0,tds_under_range=0;
+char topic[LEN_TOPIC]="858173002686";
+uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
 float averageVoltage = 0,tdsValue = 0,temperature = 25;
-extern __IO uint16_t Conversion_Value;
-uint16_t adc_value;
-
-    uint8_t analogBufferIndex;
-    int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
-    float compensationCoefficient;
-float compensationVolatge;
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -71,6 +63,18 @@ int main(void)
 
     while (1)
     {
+        sim_signal = sim_signal_strength(rx_buf);
+        if( (10 < sim_signal) && (30 > sim_signal) )
+        {
+            //sim signal is strong enough
+            GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1));
+        }
+        else
+        {
+            //sim signal is too low or no signal at all
+            GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(0));
+        }
+        
         Delay(1000);
         update_phonebook();
         Delay(1000);
@@ -148,8 +152,8 @@ void update_phonebook(void){
         //check if message contain activate code
         if( ((stat & SIM_RES_OK)  != 0 ) && ((sim_get_sms_data(temp_data,rx_buf) & SIM_RES_OK) != 0 ) )
         {
-            strcpy(input_topic,temp_data,LEN_TOPIC);
-            if( !strcmp(topic,input_topic,LEN_TOPIC) )
+            // strcpy(inpsut_topic,temp_data,LEN_TOPIC);
+            if( !strcmp(topic,temp_data,LEN_TOPIC) )
             {
                 sim_get_sms_contact(temp_contact,rx_buf);
 
@@ -202,10 +206,10 @@ uint16_t read_adc(void)
   */
 void read_tds(void)
 {
-    // uint8_t analogBufferIndex;
-    // int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
-    // float compensationCoefficient;
-    // float compensationVolatge;
+    uint8_t analogBufferIndex;
+    int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
+    float compensationCoefficient;
+    float compensationVolatge;
 
     for( analogBufferIndex=0; analogBufferIndex < SCOUNT; analogBufferIndex++)
     {

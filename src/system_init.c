@@ -230,17 +230,22 @@ void ADC1_Config(void)
 //------------------------------------------------
 void putchar(int ch)
 {
-#if defined DEBUG
-    USART_SendData(USART2, (uint16_t)ch);
-	/* Loop until the end of transmission */
-	while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET){};
-
-#else
 	USART_SendData(USART1, (uint8_t) ch);
 	/* Loop until the end of transmission */
 	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
-#endif
 }
+
+#if defined DEBUG
+//------------------------------------------------
+// printf
+//------------------------------------------------
+void printf(int ch)
+{
+    USART_SendData(USART2, (uint8_t) ch);
+	/* Loop until the end of transmission */
+	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){};
+}
+#endif
 
 //------------------------------------------------
 // strcmp
