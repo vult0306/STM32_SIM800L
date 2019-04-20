@@ -36,7 +36,7 @@
 #define PUBLISH_TDS_PROBE_NOWATER 1
 #define PUBLISH_SUBSCRIBED_OK 2
 #define TDS_MEASURE_REPEAT 10               //repeat measuring TDS n times to make sure the water is really dirty
-#define TDS_LIMIT 700                       //watermark value for TDS
+#define TDS_LIMIT 500                       //watermark value for TDS
 
 #define SUBSCONFIRMEDF  0x1         //subscribed flag
 #define UNSAFEF         0x2         //unsafe flag

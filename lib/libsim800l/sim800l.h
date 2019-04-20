@@ -4,7 +4,7 @@
 #include "stm32f10x.h"
 
 /* uC-SIM buffer */
-#define MIN_BUFFER 255
+#define MIN_BUFFER 160
 #define MAX_SMS 35
 
 /* SIM command index */
@@ -15,7 +15,8 @@
 #define IDX_CMD_CNMI_MODE       5
 #define IDX_CMD_RESPOND_OK      6
 #define IDX_CMD_SIG_STR         7                   //signal strength
-#define IDX_CMD_MAX             7                   // maximum of supported command
+#define IDX_CMD_REJ_IN_CALL     8                   //reject incomming call
+#define IDX_CMD_MAX             8                   // maximum of supported command
 
 /* length of command string*/
 #define LEN_PHONE_NUM           12
@@ -26,7 +27,8 @@
 #define LEN_CMD_CNMI_MODE       17                  //length of CNMI command
 #define LEN_CMD_RESPOND_OK      6                   //length of respond from module SIM
 #define LEN_PUBLISH_MES         60
-#define LEN_CMD_SIG_STR         8                   //length of check signal strength command
+#define LEN_CMD_SIG_STR         6                   //length of check signal strength command
+#define LEN_CMD_REJ_IN_CALL     12                  //reject incomming call
 
 /* sms state */
 #define SMS_READ 0
@@ -50,6 +52,7 @@ uint8_t sim_check_res(char*);
 uint8_t sim_get_sms_contact(char*, char*);
 uint8_t sim_get_sms_data(char*, char*);
 uint8_t sim_get_sms_state(char*);
+uint8_t sim_rej_in_call(uint8_t,char*);
 
 void push_cmd(char*, uint8_t);
 int find_c(char*, uint8_t, uint8_t, char);    //return index of char in buffer

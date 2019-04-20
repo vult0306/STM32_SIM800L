@@ -7,7 +7,7 @@
 
 #include "stm32f10x.h"
 
-#define DEBUG
+// #define DEBUG
 #define ADC
 
 #define SIM                   USART1
@@ -32,7 +32,7 @@ void printf(int);
 #if defined ADC
 void ADC1_Config(void);
 #endif
-void putchar(int);
+void putchar(char);
 uint8_t strcmp(char*,char*,u8);
 void strcpy(char*,char*,u8);
 void memset(void*,char,u16);

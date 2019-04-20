@@ -228,9 +228,9 @@ void ADC1_Config(void)
 //------------------------------------------------
 // putchar
 //------------------------------------------------
-void putchar(int ch)
+void putchar(char ch)
 {
-	USART_SendData(USART1, (uint8_t) ch);
+	USART_SendData(USART1, (char) ch);
 	/* Loop until the end of transmission */
 	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
 }

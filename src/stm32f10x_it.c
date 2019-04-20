@@ -153,7 +153,7 @@ void SysTick_Handler(void)
   */
 void USART1_IRQHandler(void)
 {
-    uint16_t temp;
+    char temp;
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
         temp = (char)(USART_ReceiveData(USART1) & 0x1FF);

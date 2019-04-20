@@ -25,9 +25,9 @@
 #include "sim800l.h"
 
 char rx_buf[SIM_BUFFER];
-char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"******Loi loc nuoc het han, vui long thay loi loc moi******",
-                                                    "**Dau do khong tiep xuc voi nuoc, vui long kiem tra dau do*",
-                                                    "*********************DANG KY THANH CONG********************"};
+char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
+                                                    "Dau do khong co nuoc",
+                                                    "*DANG KY THANH CONG*"};
 char topic[LEN_TOPIC]="858173002686";
 uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
@@ -54,6 +54,9 @@ int main(void)
     //do not generate interrupt when new sms comes
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 );
     Delay(1000);
+    //disable phonecall
+    while( (sim_get_rej_in_call(1,rx_buf) & SIM_RES_OK) == 0 );
+    Delay(1000);
     //free phonebook
     for(i=0;i<MAX_CLIENT;i++)
     {
@@ -64,7 +67,7 @@ int main(void)
     while (1)
     {
         sim_signal = sim_signal_strength(rx_buf);
-        if( (10 < sim_signal) && (30 > sim_signal) )
+        if( (2 < sim_signal) && (30 > sim_signal) )
         {
             //sim signal is strong enough
             GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1));
@@ -165,6 +168,7 @@ void update_phonebook(void){
 
                     //this is new contact, push it to the end of phonebook
                     if( (contact[j].stat & SUBSCONFIRMEDF) == 0 ){
+                        contact[j].stat |= SUBSCONFIRMEDF;
                         strcpy(contact[j].number,temp_contact,LEN_PHONE_NUM);
                         break;
                     }
@@ -172,7 +176,7 @@ void update_phonebook(void){
                 }
 
                 //if this is "REC UNREAD"
-                if( sim_get_sms_state(rx_buf) == SMS_UNREAD )
+                if( (j< MAX_CLIENT) && (sim_get_sms_state(rx_buf) == SMS_UNREAD) )
                 {
                     if( (sim_send_sms(contact[j].number,publish_mes[PUBLISH_SUBSCRIBED_OK],rx_buf) & SIM_RES_OK) !=0 )
                         contact[j].stat |= SUBSCONFIRMEDF;

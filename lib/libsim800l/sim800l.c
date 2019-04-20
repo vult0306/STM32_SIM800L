@@ -3,7 +3,8 @@
 
 uint16_t RxCounter=0;
 
-char sim_cmd_signal_strenth[LEN_CMD_SIG_STR]="AT+CSQ=?";
+char sim_cmd_rej_in_call[LEN_CMD_REJ_IN_CALL]="AT+GSMBUSY=x";
+char sim_cmd_signal_strenth[LEN_CMD_SIG_STR]="AT+CSQ";
 char sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE]="AT+CMGF=x"; //set text mode to module SIM
 char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=xx,x";   //read sms command, x = sms index
 char sim_cmd_dele_sms[LEN_CMD_DELE_SMS]="AT+CMGD=xx";   //delete sms command, x = sms index
@@ -72,9 +73,8 @@ uint8_t sim_read_sms(uint8_t sms_idx, uint8_t mode, char* buf)
 
     memset(buf,0,MIN_BUFFER);        //cleanup buffer first
     RxCounter=0;                     //reset received buffer counter
-    memset(&sim_cmd_read_sms[LEN_CMD_READ_SMS-2],'0',2);
-    sim_cmd_read_sms[LEN_CMD_READ_SMS-4]=sms_idx/10+0x30;    //set sms index
-    sim_cmd_read_sms[LEN_CMD_READ_SMS-3]=sms_idx%10+0x30;    //set sms index
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-4]=(sms_idx / 10)+0x30;    //set sms index
+    sim_cmd_read_sms[LEN_CMD_READ_SMS-3]=(sms_idx % 10)+0x30;    //set sms index
     sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=mode+0x30;    //set sms index
     push_cmd(sim_cmd_read_sms,LEN_CMD_READ_SMS);    //send cmd to module sim
     putchar('\n');
@@ -92,9 +92,8 @@ uint8_t sim_dele_sms(uint8_t sms_idx, char* buf)
     if( sms_idx >= MAX_SMS ) return IDX_OOR;
     memset(buf,0,MIN_BUFFER);        //cleanup buffer first
     RxCounter=0;                     //reset received buffer counter
-    memset(&sim_cmd_dele_sms[LEN_CMD_DELE_SMS-2],'0',2);
-    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-2]=sms_idx/10+0x30;    //set sms index
-    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-1]=sms_idx%10+0x30;    //set sms index
+    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-2]=(sms_idx / 10)+0x30;    //set sms index
+    sim_cmd_dele_sms[LEN_CMD_DELE_SMS-1]=(sms_idx % 10)+0x30;    //set sms index
     push_cmd(sim_cmd_dele_sms,LEN_CMD_DELE_SMS);    //send cmd to module sim
     putchar('\n');
     Delay(1000);
@@ -113,10 +112,14 @@ uint8_t sim_send_sms(char* phone_number, char* text, char* buf)
     RxCounter=0;                     //reset received buffer counter
     push_cmd(sim_cmd_send_sms,LEN_CMD_SEND_SMS+LEN_PHONE_NUM);       //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    Delay(100);
     push_cmd(text,LEN_PUBLISH_MES);
+    Delay(100);
     putchar(26);
-    return sim_check_res(buf);
+    Delay(1000);
+    return SIM_RES_OK;
+    /* I guess the respond depends on the setup on phone...*/
+    // return sim_check_res(buf);
 }
 
 
@@ -231,7 +234,7 @@ uint8_t sim_get_sms_contact(char* num,char* buf)
 
     // struct PHONEBOOK temp={"AT+CMGS=\"+ZZxxxxxxxxx\"",FALSE,FALSE};
     if( sim_check_res(buf) ){
-        for(i=0;i<MIN_BUFFER;i++)
+        for(i=LEN_CMD_READ_SMS;i<MIN_BUFFER;i++)
             if(buf[i]==',')
                 break;
         if( i == 0 ) return NO_SMS;
@@ -273,3 +276,23 @@ uint8_t sim_get_sms_data(char* data, char* buf)
     }
 }
 
+/*-----------------------------------------------------------------*/
+/* reject incomming call
+ * mode_idx:
+ *  0:  Enable incoming call
+ *  1:  Forbid all incoming calls
+ *  2:  Forbid incoming voice calls but enable CSD calls
+ * return sim respond flag
+ */
+uint8_t sim_get_rej_in_call(uint8_t mode_idx, char* buf)
+{
+    if( mode_idx > 2 ) return IDX_OOR;
+
+    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    RxCounter=0;                     //reset received buffer counter
+    sim_cmd_rej_in_call[LEN_CMD_REJ_IN_CALL-1]=mode_idx+0x30;    //set mode
+    push_cmd(sim_cmd_rej_in_call,LEN_CMD_REJ_IN_CALL);    //send cmd to module sim
+    putchar('\n');
+    Delay(1000);
+    return sim_check_res(buf);
+}
