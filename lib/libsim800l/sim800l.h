@@ -4,19 +4,21 @@
 #include "stm32f10x.h"
 
 /* uC-SIM buffer */
-#define MIN_BUFFER 160
+#define MIN_BUFFER 255
 #define MAX_SMS 35
 
-/* SIM command index */
-#define IDX_CMD_TEXT_MODE       1
-#define IDX_CMD_READ_SMS        2
-#define IDX_CMD_DELE_SMS        3
-#define IDX_CMD_SEND_SMS        4
-#define IDX_CMD_CNMI_MODE       5
-#define IDX_CMD_RESPOND_OK      6
-#define IDX_CMD_SIG_STR         7                   //signal strength
-#define IDX_CMD_REJ_IN_CALL     8                   //reject incomming call
-#define IDX_CMD_MAX             8                   // maximum of supported command
+// /* SIM command index */
+// #define IDX_CMD_TEXT_MODE       1
+// #define IDX_CMD_READ_SMS        2
+// #define IDX_CMD_DELE_SMS        3
+// #define IDX_CMD_SEND_SMS        4
+// #define IDX_CMD_CNMI_MODE       5
+// #define IDX_CMD_RES_OK          6
+// #define IDX_CMD_RES_ERR         7
+// #define IDX_CMD_SIG_STR         8                   //signal strength
+// #define IDX_CMD_REJ_IN_CALL     9                   //reject incomming call
+// #define IDX_SW_FLW_CTRL         10
+// #define IDX_CMD_MAX             10                   // maximum of supported command
 
 /* length of command string*/
 #define LEN_PHONE_NUM           12
@@ -25,9 +27,11 @@
 #define LEN_CMD_DELE_SMS        10                  //length of delete sms command
 #define LEN_CMD_SEND_SMS        10                  //length of send sms command
 #define LEN_CMD_CNMI_MODE       17                  //length of CNMI command
-#define LEN_CMD_RESPOND_OK      6                   //length of respond from module SIM
-#define LEN_PUBLISH_MES         60
+#define LEN_CMD_RES_OK          6                   //length of respond from module SIM
+#define LEN_CMD_RES_ERR         9                   //length of respond from module SIM
+#define LEN_PUBLISH_MES         20
 #define LEN_CMD_SIG_STR         6                   //length of check signal strength command
+#define LEN_CMD_SW_FLW_CTRL     10
 #define LEN_CMD_REJ_IN_CALL     12                  //reject incomming call
 
 /* sms state */
@@ -37,9 +41,11 @@
 /* module sim return code */
 #define SIM_RES_ERROR         0x1
 #define SIM_RES_OK            0x2
-#define NO_SMS                0x4
-#define IDX_OOR               0x8
-#define LEN_OOR               0x10
+#define SIM_NO_RES            0x4
+#define NO_SMS                0x8
+#define IDX_OOR               0x10
+#define LEN_OOR               0x20
+
 
 /* supportted function */
 uint8_t sim_read_sms(uint8_t, uint8_t, char*);

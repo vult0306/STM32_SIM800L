@@ -47,11 +47,8 @@
 
 /* manage contact */
 struct PHONEBOOK {
-  char number[LEN_PHONE_NUM];                //contact number including send sms command
-  uint32_t stat;
-//   bool subscribed;                       //this contact subscribed to receive message
-//   bool unsafe_published;                       //published warning/activating code to this contact
-//   bool unsafe_published;                       //published warning/activating code to this contact
+  char number[LEN_PHONE_NUM];       //contact number including send sms command
+  uint32_t stat;                    //SUBSCONFIRMEDF,UNSAFEF,UNDIGF
 };
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

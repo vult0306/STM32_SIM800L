@@ -4,6 +4,7 @@
 #include "system_init.h"
 
 static __IO uint32_t TimingDelay;
+NVIC_InitTypeDef NVIC_InitStruct;
 //------------------------------------------------
 // booting the system
 // Cau hinh cac module can su dung
@@ -61,6 +62,7 @@ void booting(void)
 		/* Capture error */ 
 		while (1);
 	}
+    Delay(3000);
 }
 
 
@@ -88,7 +90,6 @@ void CLK_Config(void)
 //------------------------------------------------
 void NVIC_Config(void)
 {
-	NVIC_InitTypeDef NVIC_InitStruct;	
 	NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x00);
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
@@ -115,21 +116,24 @@ void GPIO_Config(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-// 	/* Configure USARTy Rx as input floating */
+	/* Configure USARTy Rx as input floating */
+
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+#if defined DEBUG
+    GPIO_InitStructure.GPIO_Pin |= GPIO_Pin_3;
+#endif
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 // 	/* Configure USARTy Tx as alternate function push-pull */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+#if defined DEBUG
+    GPIO_InitStructure.GPIO_Pin |= GPIO_Pin_2;
+#endif
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-#if defined DEBUG
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-#endif
 #if defined ADC
     /* Configure PB.00 (ADC Channel08) as analog input -------------------------*/
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
@@ -151,12 +155,13 @@ void GPIO_Config(void)
 void UART1_Config(void)
 {
 	USART_InitTypeDef USART_InitStructure;
+    USART_Cmd(USART1, DISABLE);
 	USART_InitStructure.USART_BaudRate = 9600;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
 	USART_InitStructure.USART_Parity = USART_Parity_No;
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	USART_Init(USART1, &USART_InitStructure);
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART1, ENABLE);
@@ -183,7 +188,7 @@ void UART2_Config(void)
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
 	USART_Init(USART2, &USART_InitStructure);
-	USART_ITConfig(USART2, USART_IT_RXNE | USART_FLAG_TC, ENABLE);
+	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART2, ENABLE);
 }
 #endif
@@ -232,18 +237,18 @@ void putchar(char ch)
 {
 	USART_SendData(USART1, (char) ch);
 	/* Loop until the end of transmission */
-	while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET){};
+	while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET){};
 }
 
 #if defined DEBUG
 //------------------------------------------------
 // printf
 //------------------------------------------------
-void printf(int ch)
+void printf(char ch)
 {
-    USART_SendData(USART2, (uint8_t) ch);
+    USART_SendData(USART2, (char) ch);
 	/* Loop until the end of transmission */
-	while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET){};
+	while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET){};
 }
 #endif
 

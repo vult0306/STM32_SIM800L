@@ -1,8 +1,9 @@
 #include "sim800l.h"
 #include "system_init.h"
 
-uint16_t RxCounter=0;
+extern uint16_t RxCounter;
 
+char sim_cmd_sw_flw_ctrl[LEN_CMD_SW_FLW_CTRL]="AT+IFC=1,1";
 char sim_cmd_rej_in_call[LEN_CMD_REJ_IN_CALL]="AT+GSMBUSY=x";
 char sim_cmd_signal_strenth[LEN_CMD_SIG_STR]="AT+CSQ";
 char sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE]="AT+CMGF=x"; //set text mode to module SIM
@@ -10,7 +11,9 @@ char sim_cmd_read_sms[LEN_CMD_READ_SMS]="AT+CMGR=xx,x";   //read sms command, x 
 char sim_cmd_dele_sms[LEN_CMD_DELE_SMS]="AT+CMGD=xx";   //delete sms command, x = sms index
 char sim_cmd_send_sms[LEN_CMD_SEND_SMS + LEN_PHONE_NUM]="AT+CMGS=\"+xxxxxxxxxxx\"";
 char sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE]="AT+CNMI=0,0,0,0,0"; //do nothing with new sms, let progran handle it
-char sim_cmd_res_ok[LEN_CMD_RESPOND_OK]="\r\nOK\r\n";//respond from module SIM, expected to be "OK"
+char sim_cmd_res_ok[LEN_CMD_RES_OK]="\r\nOK\r\n";//respond from module SIM, expected to be "OK"
+char sim_cmd_res_err[LEN_CMD_RES_ERR]="\r\nERROR\r\n";//respond from module SIM, expected to be "error"
+
 
 /*-----------------------------------------------------------------
  * return sms state (read/unread)
@@ -61,6 +64,7 @@ int find_c(char* buffer, uint8_t end1, uint8_t end2, char c)
 }
 
 
+
 /*-----------------------------------------------------------------
  * read sms
  * return input sms_idx if it is out of range
@@ -78,7 +82,7 @@ uint8_t sim_read_sms(uint8_t sms_idx, uint8_t mode, char* buf)
     sim_cmd_read_sms[LEN_CMD_READ_SMS-1]=mode+0x30;    //set sms index
     push_cmd(sim_cmd_read_sms,LEN_CMD_READ_SMS);    //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     return sim_check_res(buf);
 }
 
@@ -96,7 +100,7 @@ uint8_t sim_dele_sms(uint8_t sms_idx, char* buf)
     sim_cmd_dele_sms[LEN_CMD_DELE_SMS-1]=(sms_idx % 10)+0x30;    //set sms index
     push_cmd(sim_cmd_dele_sms,LEN_CMD_DELE_SMS);    //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     return sim_check_res(buf);
 }
 
@@ -112,14 +116,11 @@ uint8_t sim_send_sms(char* phone_number, char* text, char* buf)
     RxCounter=0;                     //reset received buffer counter
     push_cmd(sim_cmd_send_sms,LEN_CMD_SEND_SMS+LEN_PHONE_NUM);       //send cmd to module sim
     putchar('\n');
-    Delay(100);
+    Delay(10);
     push_cmd(text,LEN_PUBLISH_MES);
-    Delay(100);
     putchar(26);
-    Delay(1000);
-    return SIM_RES_OK;
-    /* I guess the respond depends on the setup on phone...*/
-    // return sim_check_res(buf);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
+    return sim_check_res(buf);
 }
 
 
@@ -130,12 +131,14 @@ uint8_t sim_send_sms(char* phone_number, char* text, char* buf)
 uint8_t sim_set_text_mode(uint8_t mode, char* buf)
 {
     if( mode > 1 ) return IDX_OOR;
-    memset(buf,0,MIN_BUFFER);        //cleanup buffer first
+    memset(buf,'0',MIN_BUFFER);        //cleanup buffer first
     RxCounter=0;                     //reset received buffer counter
     sim_cmd_set_text_mode[LEN_CMD_TEXT_MODE-1]=mode+0x30;    //set mode index
     push_cmd(sim_cmd_set_text_mode,LEN_CMD_TEXT_MODE);    //send cmd to module sim;
+    // Delay(100);
+    // putchar('\r');
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     return sim_check_res(buf);
 }
 
@@ -152,7 +155,7 @@ bool sim_set_cnmi_mode(uint8_t mode, uint8_t mt, uint8_t bm, uint8_t ds, uint8_t
     sim_cmd_set_cnmi_mode[LEN_CMD_CNMI_MODE-9]=mode+0x30;    //set mode index
     push_cmd(sim_cmd_set_cnmi_mode,LEN_CMD_CNMI_MODE);    //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     return sim_check_res(buf);
 }
 
@@ -180,7 +183,7 @@ uint8_t sim_signal_strength(char* buf)
     RxCounter=0;                     //reset received buffer counter
     push_cmd(sim_cmd_signal_strenth,LEN_CMD_SIG_STR);    //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     if(sim_check_res(buf))
     {
         for(i=0;i<MIN_BUFFER;i++)
@@ -209,18 +212,21 @@ uint8_t sim_signal_strength(char* buf)
  */
 bool sim_check_res(char* buf)
 {
-  uint8_t i;
-  for(i=MIN_BUFFER-1;i>0;i--)
-    if( *(buf + i) == '\n' ){
-      if( strcmp(buf+i-LEN_CMD_RESPOND_OK+1,sim_cmd_res_ok,LEN_CMD_RESPOND_OK) ){
-        i=0;
-      }
-      break;
+    uint8_t i;
+    for(i=MIN_BUFFER-1;i>0;i--)
+    {
+        if( *(buf + i) == '\r' )
+        {
+            if( !strcmp(buf+i,sim_cmd_res_ok,LEN_CMD_RES_OK) )
+            {
+                return SIM_RES_OK;
+            }
+            else if( !strcmp(buf+i,sim_cmd_res_err,LEN_CMD_RES_ERR) ){
+                return SIM_RES_ERROR;
+            }
+        }
     }
-  if(i==0)
-    return SIM_RES_ERROR;
-  else
-    return SIM_RES_OK;
+    return SIM_NO_RES;
 }
 
 
@@ -284,7 +290,7 @@ uint8_t sim_get_sms_data(char* data, char* buf)
  *  2:  Forbid incoming voice calls but enable CSD calls
  * return sim respond flag
  */
-uint8_t sim_get_rej_in_call(uint8_t mode_idx, char* buf)
+uint8_t sim_rej_in_call(uint8_t mode_idx, char* buf)
 {
     if( mode_idx > 2 ) return IDX_OOR;
 
@@ -293,6 +299,6 @@ uint8_t sim_get_rej_in_call(uint8_t mode_idx, char* buf)
     sim_cmd_rej_in_call[LEN_CMD_REJ_IN_CALL-1]=mode_idx+0x30;    //set mode
     push_cmd(sim_cmd_rej_in_call,LEN_CMD_REJ_IN_CALL);    //send cmd to module sim
     putchar('\n');
-    Delay(1000);
+    while( (sim_check_res(buf) != SIM_RES_OK) && (sim_check_res(buf) != SIM_RES_ERROR) );
     return sim_check_res(buf);
 }

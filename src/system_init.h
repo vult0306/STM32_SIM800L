@@ -7,8 +7,9 @@
 
 #include "stm32f10x.h"
 
-// #define DEBUG
 #define ADC
+// #define TEST_SIM
+// #define DEBUG
 
 #define SIM                   USART1
 #define SIM_GPIO              GPIOA
@@ -27,7 +28,7 @@ void GPIO_Config(void);
 void UART1_Config(void);
 #if defined DEBUG
 void UART2_Config(void);
-void printf(int);
+void printf(char);
 #endif
 #if defined ADC
 void ADC1_Config(void);

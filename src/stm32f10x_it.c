@@ -41,6 +41,13 @@
 /* Private variables ---------------------------------------------------------*/
 extern uint16_t RxCounter;
 extern char rx_buf[SIM_BUFFER];
+#if defined TEST_SIM
+#if !defined DBG_BUF
+#define DBG_BUF 255
+#endif
+extern char rx_dbg[DBG_BUF];
+extern uint8_t cmd_available,res_available,cmd_len,res_len;
+#endif
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -157,8 +164,15 @@ void USART1_IRQHandler(void)
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
         temp = (char)(USART_ReceiveData(USART1) & 0x1FF);
-            if( RxCounter < SIM_BUFFER)
-                rx_buf[RxCounter++]=temp;
+        // if( RxCounter < SIM_BUFFER)
+            rx_buf[RxCounter++]=temp;
+#if defined TEST_SIM
+        printf(temp);
+#endif
+    }
+    if(USART_GetITStatus(USART1, USART_FLAG_TXE) != RESET)
+    {
+        USART_ClearFlag(USART1,USART_FLAG_TXE);
     }
 }
 
@@ -174,11 +188,14 @@ void USART2_IRQHandler(void)
     if(USART_GetITStatus(USART2, USART_FLAG_RXNE) != RESET)
     {
         temp = (char)(USART_ReceiveData(USART2) & 0x1FF);
+#if defined TEST_SIM
+        putchar(temp);
+#endif        
     }
-    if(USART_GetITStatus(USART2, USART_FLAG_TC) != RESET)
-    {
-        USART_ClearFlag(USART2,USART_FLAG_TC);
-    }
+    // if(USART_GetITStatus(USART2, USART_FLAG_TC) != RESET)
+    // {
+    //     USART_ClearFlag(USART2,USART_FLAG_TC);
+    // }
 }
 #endif
 /******************************************************************************/

@@ -24,6 +24,13 @@
 #include "system_init.h"
 #include "sim800l.h"
 
+#if defined TEST_SIM
+#define DBG_BUF     255
+char rx_dbg[DBG_BUF];
+uint8_t cmd_available,res_available,cmd_len,res_len;
+#endif
+char a[22]="AT+CMGS=\"+84929629746\"";
+uint16_t RxCounter;
 char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
                                                     "Dau do khong co nuoc",
@@ -31,7 +38,10 @@ char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
 char topic[LEN_TOPIC]="858173002686";
 uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
+
+#if defined ADC
 float averageVoltage = 0,tdsValue = 0,temperature = 25;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -46,17 +56,21 @@ int main(void)
 {
     uint8_t i;
     booting();
-    Delay(2000);
+    Delay(1000);
 
     //interact with sim via text mode
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(1000);
+    Delay(500);
     //do not generate interrupt when new sms comes
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(1000);
+    Delay(500);
     //disable phonecall
-    while( (sim_get_rej_in_call(1,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(1000);
+    while( (sim_rej_in_call(1,rx_buf) & SIM_RES_OK) == 0 );
+    Delay(500);
+#if defined TEST_SIM
+    while(1)
+    {}
+#endif
     //free phonebook
     for(i=0;i<MAX_CLIENT;i++)
     {
@@ -81,7 +95,7 @@ int main(void)
         Delay(1000);
         update_phonebook();
         Delay(1000);
-
+#if defined ADC
         tds_over_range=0;
         tds_under_range=0;
         for(i=0;i<TDS_MEASURE_REPEAT;i++){
@@ -96,12 +110,13 @@ int main(void)
         }
         if( (tds_over_range == TDS_MEASURE_REPEAT) || (tds_under_range == TDS_MEASURE_REPEAT) )
             inform_customer();
-
+#endif
         // GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
     }
 }
 
 
+#if defined ADC
 /*-----------------------------------------------------------------*/
 /*
  * this function send out warning message to customer if the probe
@@ -130,7 +145,7 @@ void inform_customer(void)
         }
     }
 }
-
+#endif
 
 /**
   * @this function loop through all sms in memory. 
@@ -193,6 +208,7 @@ void update_phonebook(void){
 }
 
 
+#if defined ADC
 /**
   * @this function read adc value.
   */
@@ -204,7 +220,10 @@ uint16_t read_adc(void)
     ADC_SoftwareStartConvCmd(ADC1, DISABLE);                                  // disable conversino
     return ADC_GetConversionValue(ADC1);                                      // return ADC value 
 }
+#endif
 
+
+#if defined ADC
 /**
   * @this function calculate tds value from the ADC red from read_adc() function.
   */
@@ -230,7 +249,10 @@ void read_tds(void)
     //convert voltage value to tds value
     tdsValue=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
 }
+#endif
 
+
+#if defined ADC
 int getMedianNum(int* bArray) 
 {
     int i, j, bTemp;
@@ -255,6 +277,7 @@ int getMedianNum(int* bArray)
 	bTemp = (bTab[SCOUNT / 2] + bTab[SCOUNT / 2 - 1]) / 2;
       return bTemp;
 }
+#endif
 
 #ifdef  USE_FULL_ASSERT
 
