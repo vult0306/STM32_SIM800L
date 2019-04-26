@@ -28,8 +28,8 @@
 #define DBG_BUF     255
 char rx_dbg[DBG_BUF];
 uint8_t cmd_available,res_available,cmd_len,res_len;
-#endif
 char a[22]="AT+CMGS=\"+84929629746\"";
+#endif
 uint16_t RxCounter;
 char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
@@ -60,13 +60,13 @@ int main(void)
 
     //interact with sim via text mode
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(500);
+    // Delay(500);
     //do not generate interrupt when new sms comes
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(500);
+    // Delay(500);
     //disable phonecall
     while( (sim_rej_in_call(1,rx_buf) & SIM_RES_OK) == 0 );
-    Delay(500);
+    // Delay(500);
 #if defined TEST_SIM
     while(1)
     {}

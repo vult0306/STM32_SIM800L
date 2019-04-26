@@ -27,8 +27,8 @@
 #include "stm32f10x.h"
 #include "sim800l.h"
 
-#define MAX_CLIENT 10
-#define LEN_TOPIC      12
+#define MAX_CLIENT      10
+#define LEN_TOPIC       12
 #define SIM_BUFFER MIN_BUFFER
 
 #define MAX_PUBLISH_MES 3

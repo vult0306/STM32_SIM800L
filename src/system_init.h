@@ -34,9 +34,9 @@ void printf(char);
 void ADC1_Config(void);
 #endif
 void putchar(char);
-uint8_t strcmp(char*,char*,u8);
-void strcpy(char*,char*,u8);
-void memset(void*,char,u16);
+uint8_t strcmp(char*,char*,uint8_t);
+void strcpy(char*,char*,uint8_t);
+void memset(void*,char,uint16_t);
 void TimingDelay_Decrement(void);
 void Delay(__IO uint32_t);
 

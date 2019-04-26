@@ -258,7 +258,7 @@ void printf(char ch)
 // if Return value > 0 then it indicates Y is less than X.
 // if Return value = 0 then it indicates X is equal to Y.
 //------------------------------------------------
-uint8_t strcmp(char*s1,char*s2,u8 len){
+uint8_t strcmp(char*s1,char*s2,uint8_t len){
     while(len>0){
         if( *(s1+len-1) != *(s2+len-1) ){
             break;
@@ -272,7 +272,7 @@ uint8_t strcmp(char*s1,char*s2,u8 len){
 //------------------------------------------------
 // strcpy
 //------------------------------------------------
-void strcpy(char* des,char* src,u8 len){
+void strcpy(char* des,char* src,uint8_t len){
   while(len>0){
     *(des+len-1) = *(src+len-1);
     len-=1;
@@ -284,7 +284,7 @@ void strcpy(char* des,char* src,u8 len){
 //------------------------------------------------
 // memset
 //------------------------------------------------
-void memset(void* str, char ch, u16 n){
+void memset(void* str, char ch, uint16_t n){
 	int i;
 	//type cast the str from void* to char*
 	char *s = (char*) str;
