@@ -55,7 +55,7 @@ struct PHONEBOOK {
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void update_phonebook(void);
-void read_tds(void);
+uint16_t read_tds(void);
 void inform_customer(void);
 
 uint16_t read_adc(void);

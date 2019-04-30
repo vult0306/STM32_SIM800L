@@ -9,7 +9,8 @@
 
 #define ADC
 // #define TEST_SIM
-// #define DEBUG
+#define DEBUG
+#define DBG_BUF 255
 
 #define SIM                   USART1
 #define SIM_GPIO              GPIOA
@@ -26,13 +27,27 @@ void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
 void UART1_Config(void);
-#if defined DEBUG
-void UART2_Config(void);
-void printf(char);
-#endif
+
 #if defined ADC
 void ADC1_Config(void);
 #endif
+
+
+#if defined DEBUG
+/* define debug cmd code */
+#define CMD_NEW_TEMPERATOR  0
+#define CMD_SET_TEXT_MODE   1
+#define CMD_DELE_SMS        2
+#define CMD_SEND_SMS        3
+#define CMD_CNMI_MODE       4
+#define CMD_SIG_STR         5                   //signal strength
+#define CMD_REJ_IN_CALL     6                   //reject incomming call
+#define CMD_MAX             7
+
+void UART2_Config(void);
+void print(char);
+#endif
+
 void putchar(char);
 uint8_t strcmp(char*,char*,uint8_t);
 void strcpy(char*,char*,uint8_t);

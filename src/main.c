@@ -30,6 +30,15 @@ char rx_dbg[DBG_BUF];
 uint8_t cmd_available,res_available,cmd_len,res_len;
 char a[22]="AT+CMGS=\"+84929629746\"";
 #endif
+
+#if defined DEBUG
+#define DBG_BUF 255
+char rx_dbg[DBG_BUF];
+char tx_dbg[DBG_BUF];
+uint16_t DbgCounter;
+uint16_t cmd;
+bool new_cmd = FALSE;
+#endif
 uint16_t RxCounter;
 char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
@@ -40,7 +49,8 @@ uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
 
 #if defined ADC
-float averageVoltage = 0,tdsValue = 0,temperature = 25;
+float averageVoltage = 0,temperature = 25;
+uint16_t tdsValue = 0;
 #endif
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,19 +68,65 @@ int main(void)
     booting();
     Delay(1000);
 
+#if defined DEBUG
+    while(1)
+    {
+        if( new_cmd ){
+            //the first 3 character is command code
+            cmd = (rx_dbg[0]-0x30)*100 + (rx_dbg[1]-0x30)*10 + (rx_dbg[2]-0x30);
+            switch (cmd)
+            {
+                //cmd format:   xxx xx
+                case CMD_NEW_TEMPERATOR:
+                    for(i=0;i<DbgCounter;i++)
+                    {
+                        //frontend should already valid the arguments!!!
+                        if( (rx_dbg[i] == ' ') && (rx_dbg[i+1] != ' ') )
+                        {
+                            temperature = (rx_dbg[i+1]-0x30)*10 + (rx_dbg[i+2]-0x30);
+                            tdsValue = read_tds();
+                            tx_dbg[0] = (char)( tdsValue/10000 + 0x30);
+                            tx_dbg[1] = (char)((tdsValue/1000)%10 + 0x30);
+                            tx_dbg[2] = (char)((tdsValue/100)%10 + 0x30);
+                            tx_dbg[3] = (char)((tdsValue/10)%10 + 0x30);
+                            tx_dbg[4] = (char)( tdsValue%10 + 0x30);
+                            for(i=0;i<5;i++)
+                                print(tx_dbg[i]);
+                            break;
+                        }
+                    }
+                    // USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+                break;
+                case CMD_SET_TEXT_MODE:
+                break;
+                case CMD_DELE_SMS:
+                break;
+                case CMD_SEND_SMS:
+                break;
+                case CMD_CNMI_MODE:
+                break;
+                case CMD_SIG_STR:
+                break;
+                case CMD_REJ_IN_CALL:
+                break;
+                default:
+                break;
+            }
+            DbgCounter = 0;
+            new_cmd = FALSE;
+        }
+    }
+#endif
+
     //interact with sim via text mode
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 );
-    // Delay(500);
+
     //do not generate interrupt when new sms comes
     while( (sim_set_cnmi_mode(0,0,0,0,0,rx_buf) & SIM_RES_OK) == 0 );
-    // Delay(500);
+
     //disable phonecall
     while( (sim_rej_in_call(1,rx_buf) & SIM_RES_OK) == 0 );
-    // Delay(500);
-#if defined TEST_SIM
-    while(1)
-    {}
-#endif
+
     //free phonebook
     for(i=0;i<MAX_CLIENT;i++)
     {
@@ -100,7 +156,7 @@ int main(void)
         tds_under_range=0;
         for(i=0;i<TDS_MEASURE_REPEAT;i++){
             Delay(1000);
-            read_tds();
+            tdsValue=read_tds();
             if(tdsValue>TDS_LIMIT){
                 tds_over_range++;
             }
@@ -227,9 +283,10 @@ uint16_t read_adc(void)
 /**
   * @this function calculate tds value from the ADC red from read_adc() function.
   */
-void read_tds(void)
+uint16_t read_tds(void)
 {
     uint8_t analogBufferIndex;
+    uint16_t ppm_value=0;
     int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
     float compensationCoefficient;
     float compensationVolatge;
@@ -247,7 +304,8 @@ void read_tds(void)
     compensationCoefficient=1.0+0.02*(temperature-25.0);
     compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
     //convert voltage value to tds value
-    tdsValue=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
+    ppm_value=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
+    return ppm_value;
 }
 #endif
 

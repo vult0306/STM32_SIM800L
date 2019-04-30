@@ -94,13 +94,16 @@ void NVIC_Config(void)
 
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
 	NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;
-#if defined DEBUG
-	NVIC_InitStruct.NVIC_IRQChannel |= USART2_IRQn;
-#endif
     NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
 	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
  
+ #if defined DEBUG
+	NVIC_InitStruct.NVIC_IRQChannel = USART2_IRQn;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
+	NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
+#endif
 }
 
 
@@ -119,20 +122,26 @@ void GPIO_Config(void)
 	/* Configure USARTy Rx as input floating */
 
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
-#if defined DEBUG
-    GPIO_InitStructure.GPIO_Pin |= GPIO_Pin_3;
-#endif
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+#if defined DEBUG
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+#endif
 // 	/* Configure USARTy Tx as alternate function push-pull */
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-#if defined DEBUG
-    GPIO_InitStructure.GPIO_Pin |= GPIO_Pin_2;
-#endif
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+#if defined DEBUG
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+#endif
 
 #if defined ADC
     /* Configure PB.00 (ADC Channel08) as analog input -------------------------*/
@@ -181,6 +190,7 @@ void UART1_Config(void)
 void UART2_Config(void)
 {
 	USART_InitTypeDef USART_InitStructure;
+    USART_Cmd(USART2, DISABLE);
 	USART_InitStructure.USART_BaudRate = 9600;
 	USART_InitStructure.USART_WordLength = USART_WordLength_8b;
 	USART_InitStructure.USART_StopBits = USART_StopBits_1;
@@ -242,9 +252,9 @@ void putchar(char ch)
 
 #if defined DEBUG
 //------------------------------------------------
-// printf
+// print
 //------------------------------------------------
-void printf(char ch)
+void print(char ch)
 {
     USART_SendData(USART2, (char) ch);
 	/* Loop until the end of transmission */

@@ -41,12 +41,10 @@
 /* Private variables ---------------------------------------------------------*/
 extern uint16_t RxCounter;
 extern char rx_buf[SIM_BUFFER];
-#if defined TEST_SIM
-#if !defined DBG_BUF
-#define DBG_BUF 255
-#endif
+#if defined DEBUG
+extern uint16_t DbgCounter;
 extern char rx_dbg[DBG_BUF];
-extern uint8_t cmd_available,res_available,cmd_len,res_len;
+extern bool new_cmd;
 #endif
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -185,9 +183,21 @@ void USART1_IRQHandler(void)
 void USART2_IRQHandler(void)
 {
     char temp;
-    if(USART_GetITStatus(USART2, USART_FLAG_RXNE) != RESET)
+    if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)
     {
         temp = (char)(USART_ReceiveData(USART2) & 0x1FF);
+#if defined DEBUG
+        //maximum command length = 255, frontend needs to validate
+        if( !new_cmd )
+        {
+            rx_dbg[DbgCounter++]=temp;
+            if(temp == '\n')
+            {
+                new_cmd = TRUE;
+                // USART_ITConfig(USART2, USART_IT_RXNE, DISABLE);
+            }
+        }
+#endif
 #if defined TEST_SIM
         putchar(temp);
 #endif        
