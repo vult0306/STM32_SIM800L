@@ -7,6 +7,7 @@
 
 #include "stm32f10x.h"
 
+// #define CALIB
 #define ADC
 // #define TEST_SIM
 #define DEBUG

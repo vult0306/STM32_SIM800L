@@ -49,7 +49,7 @@ uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
 
 #if defined ADC
-float averageVoltage = 0,temperature = 25;
+float averageVoltage = 0,temperature = 23;
 uint16_t tdsValue = 0;
 #endif
 
@@ -299,12 +299,17 @@ uint16_t read_tds(void)
 
     // read the analog value more stable by the median filtering
     // algorithm, and convert to voltage value
-    averageVoltage = getMedianNum(analogBuffer) * (float)VREF / 4096.0; //ADC 12 bits
+    averageVoltage = getMedianNum(analogBuffer) * (float)VREF / 4096.0;
     //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0));
     compensationCoefficient=1.0+0.02*(temperature-25.0);
     compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
     //convert voltage value to tds value
-    ppm_value=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
+    // (a.x^3 + b.x^2 + c.x)/2
+    //  a = 133.42
+    //  b = 255.86
+    //  c = 857.39
+    // ppm_value=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
+    ppm_value = (uint16_t)(110*compensationVolatge*compensationVolatge + 169*compensationVolatge -1);
     return ppm_value;
 }
 #endif

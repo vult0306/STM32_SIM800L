@@ -42,7 +42,7 @@
 #define UNSAFEF         0x2         //unsafe flag
 #define UNDIGF          0x4         //undig flag
 
-#define VREF 3.0                            // analog reference voltage(Volt) of the ADC
+#define VREF (float)3.3                            // analog reference voltage(Volt) of the ADC
 #define SCOUNT  30                          // sum of sample point
 
 /* manage contact */
