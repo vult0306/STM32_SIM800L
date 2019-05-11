@@ -4,6 +4,11 @@
 #include "system_init.h"
 
 static __IO uint32_t TimingDelay;
+static __IO uint32_t sim_led_on;
+static __IO uint32_t tds_led_on;
+static __IO uint32_t sim_led_on_count;
+static __IO uint32_t tds_led_on_count;
+
 NVIC_InitTypeDef NVIC_InitStruct;
 //------------------------------------------------
 // booting the system
@@ -62,7 +67,7 @@ void booting(void)
 		/* Capture error */ 
 		while (1);
 	}
-    Delay(3000);
+    Delay(1000);
 }
 
 
@@ -114,40 +119,47 @@ void NVIC_Config(void)
 void GPIO_Config(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+    /* SIM STATUS LED */
+	GPIO_InitStructure.GPIO_Pin = SIM_STATUS_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(SIM_STATUS_PORT, &GPIO_InitStructure);
+
+    /* TDS STATUS LED */
+	GPIO_InitStructure.GPIO_Pin = TDS_STATUS_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
+	GPIO_Init(TDS_STATUS_PORT, &GPIO_InitStructure);
 
 	/* Configure USARTy Rx as input floating */
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
+	GPIO_InitStructure.GPIO_Pin = SIM_Rx_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
 
 #if defined DEBUG
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+    GPIO_InitStructure.GPIO_Pin = DBG_Rx_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(DBG_PORT, &GPIO_InitStructure);
 #endif
 // 	/* Configure USARTy Tx as alternate function push-pull */
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+	GPIO_InitStructure.GPIO_Pin = SIM_Tx_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
 
 #if defined DEBUG
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Pin = DBG_Tx_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(DBG_PORT, &GPIO_InitStructure);
 #endif
 
 #if defined ADC
     /* Configure PB.00 (ADC Channel08) as analog input -------------------------*/
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Pin = ADC_Pin;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_Init(ADC_PORT, &GPIO_InitStructure);
 #endif
 }
 
@@ -323,8 +335,54 @@ void Delay(__IO uint32_t nTime)
   */
 void TimingDelay_Decrement(void)
 {
-  if (TimingDelay != 0x00)
-  { 
-    TimingDelay--;
-  }
+    if (TimingDelay != 0x00)
+    { 
+        TimingDelay--;
+    }
+    if (sim_led_on != 0x00)
+    {
+        if(sim_led_on_count == 0)
+        {
+            GPIO_WriteBit(SIM_STATUS_PORT, SIM_STATUS_Pin, (BitAction)(1 - GPIO_ReadOutputDataBit(SIM_STATUS_PORT, SIM_STATUS_Pin)));        
+            sim_led_on_count = sim_led_on;  //reload counter
+        }
+        else
+        {
+            sim_led_on_count--;
+        }  
+    }
+    if (tds_led_on != 0x00)
+    {
+        if(tds_led_on_count == 0)
+        {
+            GPIO_WriteBit(TDS_STATUS_PORT, TDS_STATUS_Pin, (BitAction)(1 - GPIO_ReadOutputDataBit(TDS_STATUS_PORT, TDS_STATUS_Pin)));        
+            tds_led_on_count = tds_led_on;  //reload counter
+        }
+        else
+        {
+            tds_led_on_count--;
+        }  
+    }
+}
+
+/**
+  * @brief  blinking led.
+  * @param  port,pin,period
+  * @retval None
+  */
+void blink_led(uint8_t led_idx, uint32_t period)
+{
+    switch (led_idx)
+    {
+        case SIM_STATUS_Pin:
+        sim_led_on = period;
+        break;
+
+        case TDS_STATUS_Pin:
+        tds_led_on = period;
+        break;
+
+        default:
+        break;
+    }
 }

@@ -35,7 +35,7 @@
 #define PUBLISH_WATER_UNSAFE 0
 #define PUBLISH_TDS_PROBE_NOWATER 1
 #define PUBLISH_SUBSCRIBED_OK 2
-#define TDS_MEASURE_REPEAT 10               //repeat measuring TDS n times to make sure the water is really dirty
+#define TDS_MEASURE_REPEAT 20               //repeat measuring TDS n times to make sure the water is really dirty
 #define TDS_LIMIT 500                       //watermark value for TDS
 
 #define SUBSCONFIRMEDF  0x1         //subscribed flag
@@ -56,7 +56,7 @@ struct PHONEBOOK {
 /* Exported functions ------------------------------------------------------- */
 void update_phonebook(void);
 uint16_t read_tds(void);
-void inform_customer(void);
+void inform_customer(uint16_t);
 
 uint16_t read_adc(void);
 int getMedianNum(int*);

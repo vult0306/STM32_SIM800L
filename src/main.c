@@ -41,11 +41,11 @@ bool new_cmd = FALSE;
 #endif
 uint16_t RxCounter;
 char rx_buf[SIM_BUFFER];
-char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"LOI LOC NUOC HET HAN",
-                                                    "Dau do khong co nuoc",
-                                                    "*DANG KY THANH CONG*"};
+char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"NUOC UONG KHONG DU DO TINH KHIET DE UONG, VUI LONG KIEM TRA HAN SU DUNG LOI LOC",
+                                                    "DAU DO KHONG CO NUOC, KIEM TRA KET NOI DAU DO, QUE DO PHAI NGAP SAU TRONG NUOC ",
+                                                    "DANG KY THANH CONG, HE THONG SE THONG BAO CHO QUY KHACH VE CHAT LUONG NUOC LOC "};
 char topic[LEN_TOPIC]="858173002686";
-uint8_t tds_over_range=0,tds_under_range=0,sim_signal;
+uint8_t tds_over_range=0,tds_under_range=0,tds_in_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
 
 #if defined ADC
@@ -79,7 +79,7 @@ int main(void)
                 //cmd format:   xxx xx
                 case CMD_NEW_TEMPERATOR:
                     for(i=0;i<DbgCounter;i++)
-                    {
+                    { 
                         //frontend should already valid the arguments!!!
                         if( (rx_dbg[i] == ' ') && (rx_dbg[i+1] != ' ') )
                         {
@@ -140,32 +140,57 @@ int main(void)
         if( (2 < sim_signal) && (30 > sim_signal) )
         {
             //sim signal is strong enough
-            GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1));
+            GPIO_WriteBit(SIM_STATUS_PORT, SIM_STATUS_Pin, (BitAction)(1));
         }
         else
         {
             //sim signal is too low or no signal at all
-            GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(0));
+            GPIO_WriteBit(SIM_STATUS_PORT, SIM_STATUS_Pin, (BitAction)(0));
         }
-        
+
         Delay(1000);
         update_phonebook();
         Delay(1000);
 #if defined ADC
         tds_over_range=0;
         tds_under_range=0;
+        tds_in_range=0;
         for(i=0;i<TDS_MEASURE_REPEAT;i++){
-            Delay(1000);
+            Delay(500);
             tdsValue=read_tds();
             if(tdsValue>TDS_LIMIT){
+                blink_led(TDS_STATUS_Pin,500);  //blink warning led
                 tds_over_range++;
             }
-            else if(tdsValue == 0){
+            else if(tdsValue < 30){
+                blink_led(TDS_STATUS_Pin,0);  //turn off tds led
+                GPIO_WriteBit(TDS_STATUS_PORT, TDS_STATUS_Pin, (BitAction)(0));
                 tds_under_range++;
             }
+            else
+            {
+                blink_led(TDS_STATUS_Pin,0);
+                GPIO_WriteBit(TDS_STATUS_PORT, TDS_STATUS_Pin, (BitAction)(1));
+                tds_in_range++;
+            }
+            
         }
-        if( (tds_over_range == TDS_MEASURE_REPEAT) || (tds_under_range == TDS_MEASURE_REPEAT) )
-            inform_customer();
+
+        if(tds_over_range == TDS_MEASURE_REPEAT)
+        {
+            //tds is over safe range
+            inform_customer(TDS_LIMIT);
+        }
+        else if (tds_under_range == TDS_MEASURE_REPEAT)
+        {
+            //no water at tds probe
+            inform_customer(0);
+        }
+        else if (tds_in_range == TDS_MEASURE_REPEAT)
+        {
+            inform_customer(50);    // choose any value between 0 and TDS_LIMIT
+        }
+        
 #endif
         // GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
     }
@@ -178,7 +203,7 @@ int main(void)
  * this function send out warning message to customer if the probe
  * is not plugged into water or the TDS value is bigger the limittation
  */
-void inform_customer(void)
+void inform_customer(uint16_t tds)
 {
     uint8_t i;
     for( i=0; i<MAX_CLIENT; i++ )
@@ -187,16 +212,28 @@ void inform_customer(void)
         if( (contact[i].stat & SUBSCONFIRMEDF) != 0 )
         {
             //water unsafe not sent yet
-            if( (tds_over_range == TDS_MEASURE_REPEAT) && ((contact[i].stat & UNSAFEF) == 0) )
+            if(tds == TDS_LIMIT)
             {
-                if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_WATER_UNSAFE],rx_buf) & SIM_RES_OK) !=0 )
-                    contact[i].stat |= UNSAFEF;
+                if((contact[i].stat & UNSAFEF) == 0)
+                {
+                    if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_WATER_UNSAFE],rx_buf) & SIM_RES_OK) !=0 )
+                        contact[i].stat |= UNSAFEF;
+                }
             }
             //tds probe is not digged into water
-            else if( (tds_under_range == TDS_MEASURE_REPEAT) && ((contact[i].stat & UNDIGF) == 0) )
+            else if(tds == 0)
             {
-                if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_TDS_PROBE_NOWATER],rx_buf) & SIM_RES_OK) !=0 )
+                if((contact[i].stat & UNDIGF) == 0)
+                {
+                    if( (sim_send_sms(contact[i].number,publish_mes[PUBLISH_TDS_PROBE_NOWATER],rx_buf) & SIM_RES_OK) !=0 )
                     contact[i].stat |= UNDIGF;
+                }
+            }
+            //water safe
+            else
+            {
+                contact[i].stat &= ~UNSAFEF;
+                contact[i].stat &= ~UNDIGF;
             }
         }
     }

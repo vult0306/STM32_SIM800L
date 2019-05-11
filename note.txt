@@ -1,0 +1,108 @@
+All of the models, GSM/GPRS, CDMA, and EDGE, use almost identical commands for SMS.
+
+QUESTIONS:
+
+Q: What is the maximum amount of characters I can use to send an SMS message?
+Q: How do I send an SMS message manually using Hyperterminal?
+Q: How do I read messages that are received?
+Q: How do I delete a stored message?
+Q: How do I change the SMS storage locations?
+Q: If the SMS storage location becomes full, what will happen?
+Q: On the GSM/GPRS models, after I change the +CNMI, +CSCA, or +CSMP commands, it doesn’t store?
+Q: How do I send an SMS message to email accounts? (GSM/GPRS models only)
+Q: Do you have an example of how to send an SMS message to an email account?
+Q: How do I route the received SMS messages directly to the terminal equipment (TE)?
+Q: Is there a way to set the modem to assign a priority to an SMS message?
+
+
+
+
+
+ANSWERS:
+
+Q: What is the max amount of characters I can use to send a SMS message?
+
+- Supports up to 160 characters max.
+- In PDU mode using 7-bit the modem still supports 160 characters, but in 8-bit mode the modem will only support 70 characters.
+- CDMA does not support PDU mode.
+
+
+Q: How do I send an SMS message manually using Hyperterminal?
+
+- AT+CMGF=1 (command not valid in CDMA models)
+- AT+CMGS="<phone#>"
+-<type message here><ctrl + Z>
+
+
+Q: How do I read messages that are received?
+
+- AT+CMGR=n (where n equals the stored location of the message)
+- AT+CMGL (this command lists the messages by status, look in reference guide for list of values)
+
+
+Q: How do I delete a stored message?
+
+- AT+CMGD=n (where n equals the stored location of the message)
+- AT+CMGD=1,4 (On CDMA and GSM/GPRS models: will delete all the stored messages in the currently selected storage location, look in the reference guide for more list of values)
+
+
+Q: How do I change the SMS storage locations?
+
+- The +CPMS command controls the SMS storage locations.
+
+
+Q: If the SMS storage location becomes full, what will happen?
+
+- Modem will not receive anymore messages from the server until there is space available. Delete some messages once the storage location becomes full.
+
+
+Q: On the GSM/GPRS models, after I change the +CNMI, +CSCA, or +CSMP commands, it doesn’t store?
+
+- When changing these commands, you must use the +CSAS command to store the changes.
+
+
+Q: How do I send an SMS message to email accounts? (GSM/GPRS models only)
+
+- When sending an SMS message to an email account you must use a designated routing number that will tell the SMS server to route your message to an email account. Here are the some numbers:
+AT&T = "0000"
+T-Mobile = "500"
+Cingular = "121"
+
+
+Q: Do you have an example of how to send an SMS message to an email account?
+
+- AT+CMGS="0000"
+->email@multitech.com My message goes here.<ctrl + Z>
+
+
+Q: How do I route the received SMS messages directly to the terminal equipment (TE)?
+
+- The +CNMI setting controls how the messages are routed and stored. Setting the "MT" settings for this command to 2 will cause the SMS messages to be routed directly to the TE. Example: AT+CNMI=0,2,0,0,0
+- When messages are routed directly to the TE on the CDMA models, an acknowledgement will need to be sent after a message is received from the network.‘AT+CNMA’ will send an acknowledge to the network. If an acknowledgement is not sent within the providers specific time-window, the provider will keep the message on the server and keep sending the same message over-and-over again until the acknowledgement is received.
+- When messages are routed directly to the TE on the GSM/GPRS models, an acknowledgement (AT+CNMA) is not required unless you set‘AT+CSMS=1’. If an acknowledgement is not sent within the providers specific time-window, the provider will keep the message on the server and keep sending the same message over-and-over again until the acknowledgement is received.
+- This feature is not supported on the EDGE models.
+
+
+Q: Is there a way to set the modem to assign a priority to an SMS message?
+
+- No, you cannot do that.
+
+
+// SM. It refers to the message storage area on the SIM card.
+
+// ME. It refers to the message storage area on the GSM/GPRS modem
+// or mobile phone. Usually its storage space is larger than that
+// of the message storage area on the SIM card.
+
+// MT. It refers to all message storage areas associated with
+// the GSM/GPRS modem or mobile phone. For example, suppose
+// a mobile phone can access two message storage areas: "SM" and "ME".
+// The "MT" message storage area refers to the "SM" message storage
+// area and the "ME" message storage area combined together.
+
+// BM. It refers to the broadcast message storage area. It is used to store cell broadcast messages.
+
+// SR. It refers to the status report message storage area. It is used to store status reports.
+
+// TA. It refers to the terminal adaptor message storage area.
+// TE (Terminal Equipment)

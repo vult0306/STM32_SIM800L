@@ -10,17 +10,16 @@
 // #define CALIB
 #define ADC
 // #define TEST_SIM
-#define DEBUG
+// #define DEBUG
 #define DBG_BUF 255
 
-#define SIM                   USART1
-#define SIM_GPIO              GPIOA
-#define SIM_CLK               RCC_APB2Periph_USART1
-#define SIM_GPIO_CLK          RCC_APB2Periph_GPIOA
-#define SIM_RxPin             GPIO_Pin_10
-#define SIM_TxPin             GPIO_Pin_9
-#define SIM_IRQn              USART1_IRQn
-#define SIM_IRQHandler        USART1_IRQHandler
+#define SIM_STATUS_PORT       GPIOA
+#define SIM_STATUS_Pin        GPIO_Pin_6
+#define TDS_STATUS_PORT       GPIOA
+#define TDS_STATUS_Pin        GPIO_Pin_7
+#define SIM_PORT              GPIOA
+#define SIM_Tx_Pin            GPIO_Pin_9
+#define SIM_Rx_Pin            GPIO_Pin_10
 
 void booting(void);
 void CLK_Config(void);
@@ -28,9 +27,12 @@ void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
 void UART1_Config(void);
+void blink_led(uint8_t, uint32_t);
 
 #if defined ADC
 void ADC1_Config(void);
+#define ADC_PORT              GPIOB
+#define ADC_Pin               GPIO_Pin_0
 #endif
 
 
@@ -44,6 +46,10 @@ void ADC1_Config(void);
 #define CMD_SIG_STR         5                   //signal strength
 #define CMD_REJ_IN_CALL     6                   //reject incomming call
 #define CMD_MAX             7
+
+#define DBG_PORT            GPIOA
+#define DBG_Tx_Pin          GPIO_PIN_2
+#define DBG_Rx_Pin          GPIO_PIN_3
 
 void UART2_Config(void);
 void print(char);

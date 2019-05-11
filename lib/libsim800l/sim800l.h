@@ -29,7 +29,7 @@
 #define LEN_CMD_CNMI_MODE       17                  //length of CNMI command
 #define LEN_CMD_RES_OK          6                   //length of respond from module SIM
 #define LEN_CMD_RES_ERR         9                   //length of respond from module SIM
-#define LEN_PUBLISH_MES         20
+#define LEN_PUBLISH_MES         79
 #define LEN_CMD_SIG_STR         6                   //length of check signal strength command
 #define LEN_CMD_SW_FLW_CTRL     10
 #define LEN_CMD_REJ_IN_CALL     12                  //reject incomming call
