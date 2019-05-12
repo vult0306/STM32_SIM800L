@@ -1,5 +1,5 @@
 Dependencies for Project 'TDS', Target 'TDS': (DO NOT MODIFY !)
-F (.\src\main.c)(0x5CD71F56)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I.\lib\CMSIS\CM3\CoreSupport -I.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I.\lib\STM32F10x_StdPeriph_Driver\inc -I.\src -I.\lib\libsim800l -I C:\Keil\ARM\RV31\INC -I C:\Keil\ARM\CMSIS\Include -I C:\Keil\ARM\Inc\ST\STM32F10x -o ".\out\main.o" --omf_browse ".\out\main.crf" --depend ".\out\main.d")
+F (.\src\main.c)(0x5CD7A1B5)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I.\lib\CMSIS\CM3\CoreSupport -I.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I.\lib\STM32F10x_StdPeriph_Driver\inc -I.\src -I.\lib\libsim800l -I C:\Keil\ARM\RV31\INC -I C:\Keil\ARM\CMSIS\Include -I C:\Keil\ARM\Inc\ST\STM32F10x -o ".\out\main.o" --omf_browse ".\out\main.crf" --depend ".\out\main.d")
 I (src\main.h)(0x5CD70DCD)
 I (.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h)(0x5CB44167)
 I (.\lib\CMSIS\CM3\CoreSupport\core_cm3.h)(0x4D524968)
@@ -30,7 +30,7 @@ I (.\lib\STM32F10x_StdPeriph_Driver\inc\misc.h)(0x4D7849C4)
 I (src\system_init.h)(0x5CD6F45D)
 I (src\main.h)(0x5CD70DCD)
 I (.\lib\libsim800l\sim800l.h)(0x5CD71795)
-F (.\src\system_init.c)(0x5CD71124)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I.\lib\CMSIS\CM3\CoreSupport -I.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I.\lib\STM32F10x_StdPeriph_Driver\inc -I.\src -I.\lib\libsim800l -I C:\Keil\ARM\RV31\INC -I C:\Keil\ARM\CMSIS\Include -I C:\Keil\ARM\Inc\ST\STM32F10x -o ".\out\system_init.o" --omf_browse ".\out\system_init.crf" --depend ".\out\system_init.d")
+F (.\src\system_init.c)(0x5CD79F18)(-c --cpu Cortex-M3 -g -O0 --apcs=interwork -I.\lib\CMSIS\CM3\CoreSupport -I.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x -I.\lib\STM32F10x_StdPeriph_Driver\inc -I.\src -I.\lib\libsim800l -I C:\Keil\ARM\RV31\INC -I C:\Keil\ARM\CMSIS\Include -I C:\Keil\ARM\Inc\ST\STM32F10x -o ".\out\system_init.o" --omf_browse ".\out\system_init.crf" --depend ".\out\system_init.d")
 I (src\system_init.h)(0x5CD6F45D)
 I (.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h)(0x5CB44167)
 I (.\lib\CMSIS\CM3\CoreSupport\core_cm3.h)(0x4D524968)

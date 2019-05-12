@@ -66,7 +66,7 @@ int main(void)
 {
     uint8_t i;
     booting();
-    Delay(1000);
+    Delay(15000);
 
 #if defined DEBUG
     while(1)
@@ -148,9 +148,9 @@ int main(void)
             GPIO_WriteBit(SIM_STATUS_PORT, SIM_STATUS_Pin, (BitAction)(0));
         }
 
-        Delay(1000);
+        Delay(100);
         update_phonebook();
-        Delay(1000);
+        Delay(100);
 #if defined ADC
         tds_over_range=0;
         tds_under_range=0;

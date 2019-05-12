@@ -50,7 +50,8 @@ void booting(void)
        - Reload Value should not exceed 0xFFFFFF
    */
   	uint16_t i=0xFFFF;
-	while(i>0)	i--;
+	    while(i>0)	i--;
+        while(i<0xFFFF)	i++;
 	CLK_Config();
 	NVIC_Config();
 	GPIO_Config();
@@ -67,7 +68,6 @@ void booting(void)
 		/* Capture error */ 
 		while (1);
 	}
-    Delay(1000);
 }
 
 
