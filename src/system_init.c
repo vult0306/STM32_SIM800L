@@ -55,14 +55,18 @@ void booting(void)
 	CLK_Config();
 	NVIC_Config();
 	GPIO_Config();
+#if defined SMS
 	UART1_Config();
+#endif
 #if defined DEBUG
     UART2_Config();
 #endif
 #if defined ADC
     ADC1_Config();
 #endif
-
+#if defined LCD
+    LCD_Config();
+#endif
 	if (SysTick_Config(SystemCoreClock / 1000))
 	{ 
 		/* Capture error */ 
@@ -84,6 +88,9 @@ void CLK_Config(void)
 #endif
 #if defined DEBUG
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+#endif
+#if defined LCD
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
 #endif
 }
 
@@ -119,36 +126,36 @@ void NVIC_Config(void)
 void GPIO_Config(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
+
+#if defined SMS
     /* SIM STATUS LED */
 	GPIO_InitStructure.GPIO_Pin = SIM_STATUS_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
 	GPIO_Init(SIM_STATUS_PORT, &GPIO_InitStructure);
 
+	/* Configure USARTy Rx as input floating */
+	GPIO_InitStructure.GPIO_Pin = SIM_Rx_Pin;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
+
+	/* Configure USARTy Tx as alternate function push-pull */
+	GPIO_InitStructure.GPIO_Pin = SIM_Tx_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
+#endif
     /* TDS STATUS LED */
 	GPIO_InitStructure.GPIO_Pin = TDS_STATUS_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP ;
 	GPIO_Init(TDS_STATUS_PORT, &GPIO_InitStructure);
 
-	/* Configure USARTy Rx as input floating */
-
-	GPIO_InitStructure.GPIO_Pin = SIM_Rx_Pin;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
-
 #if defined DEBUG
     GPIO_InitStructure.GPIO_Pin = DBG_Rx_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(DBG_PORT, &GPIO_InitStructure);
-#endif
-// 	/* Configure USARTy Tx as alternate function push-pull */
-	GPIO_InitStructure.GPIO_Pin = SIM_Tx_Pin;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_Init(SIM_PORT, &GPIO_InitStructure);
 
-#if defined DEBUG
     GPIO_InitStructure.GPIO_Pin = DBG_Tx_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
@@ -161,8 +168,16 @@ void GPIO_Config(void)
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
     GPIO_Init(ADC_PORT, &GPIO_InitStructure);
 #endif
+
+#if defined LCD
+	GPIO_InitStructure.GPIO_Pin = SCL_pin | SDA_pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+	GPIO_Init(I2C_PORT, &GPIO_InitStructure);
+#endif
 }
 
+#if defined SMS
 //------------------------------------------------
   /* USARTx configured as follow:
         - BaudRate = 115200 baud  
@@ -187,6 +202,7 @@ void UART1_Config(void)
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART1, ENABLE);
 }
+#endif
 
 #if defined DEBUG
 //------------------------------------------------
@@ -252,6 +268,23 @@ void ADC1_Config(void)
 }
 #endif
 
+#if defined LCD
+void LCD_Config(void)
+{
+    I2C_InitTypeDef I2C_InitStruct;
+    // Step 1: Initialize I2C
+    I2C_InitStruct.I2C_ClockSpeed = 100000;
+    I2C_InitStruct.I2C_Mode = I2C_Mode_I2C;
+    I2C_InitStruct.I2C_DutyCycle = I2C_DutyCycle_2;
+    I2C_InitStruct.I2C_OwnAddress1 = 0x00;
+    I2C_InitStruct.I2C_Ack = I2C_Ack_Disable;
+    I2C_InitStruct.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+    I2C_Init(I2C1, &I2C_InitStruct);
+    I2C_Cmd(I2C1, ENABLE);
+}
+#endif
+
+#if defined SMS
 //------------------------------------------------
 // putchar
 //------------------------------------------------
@@ -261,6 +294,7 @@ void putchar(char ch)
 	/* Loop until the end of transmission */
 	while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET){};
 }
+#endif
 
 #if defined DEBUG
 //------------------------------------------------
@@ -339,6 +373,8 @@ void TimingDelay_Decrement(void)
     { 
         TimingDelay--;
     }
+
+#if defined SMS
     if (sim_led_on != 0x00)
     {
         if(sim_led_on_count == 0)
@@ -351,6 +387,7 @@ void TimingDelay_Decrement(void)
             sim_led_on_count--;
         }  
     }
+#endif
     if (tds_led_on != 0x00)
     {
         if(tds_led_on_count == 0)
@@ -374,10 +411,11 @@ void blink_led(uint8_t led_idx, uint32_t period)
 {
     switch (led_idx)
     {
+#if defined SMS
         case SIM_STATUS_Pin:
         sim_led_on = period;
         break;
-
+#endif
         case TDS_STATUS_Pin:
         tds_led_on = period;
         break;

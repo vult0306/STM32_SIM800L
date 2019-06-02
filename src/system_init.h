@@ -8,26 +8,31 @@
 #include "stm32f10x.h"
 
 // #define CALIB
+#define LCD
 #define ADC
-// #define TEST_SIM
+// #define SMS
 // #define DEBUG
 #define DBG_BUF 255
 
+#if defined SMS
 #define SIM_STATUS_PORT       GPIOA
 #define SIM_STATUS_Pin        GPIO_Pin_6
-#define TDS_STATUS_PORT       GPIOA
-#define TDS_STATUS_Pin        GPIO_Pin_7
 #define SIM_PORT              GPIOA
 #define SIM_Tx_Pin            GPIO_Pin_9
 #define SIM_Rx_Pin            GPIO_Pin_10
+void UART1_Config(void);
+#endif
+
+#define TDS_STATUS_PORT       GPIOA
+#define TDS_STATUS_Pin        GPIO_Pin_7
 
 void booting(void);
 void CLK_Config(void);
 void NVIC_Config(void);
 void Timer2_Init(void);
 void GPIO_Config(void);
-void UART1_Config(void);
 void blink_led(uint8_t, uint32_t);
+
 
 #if defined ADC
 void ADC1_Config(void);
@@ -35,6 +40,12 @@ void ADC1_Config(void);
 #define ADC_Pin               GPIO_Pin_0
 #endif
 
+#if defined LCD
+#define I2C_PORT              GPIOB
+#define SDA_pin               GPIO_Pin_7
+#define SCL_pin               GPIO_Pin_6
+void LCD_Config(void);
+#endif
 
 #if defined DEBUG
 /* define debug cmd code */

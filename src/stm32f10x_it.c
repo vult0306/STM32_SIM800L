@@ -151,6 +151,7 @@ void SysTick_Handler(void)
     TimingDelay_Decrement();
 }
 
+#if defined SMS
 /**
   * @brief  This function handles Usart1 Handler.
   * @param  None
@@ -158,6 +159,7 @@ void SysTick_Handler(void)
   */
 void USART1_IRQHandler(void)
 {
+
     char temp;
     if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
     {
@@ -173,6 +175,7 @@ void USART1_IRQHandler(void)
         USART_ClearFlag(USART1,USART_FLAG_TXE);
     }
 }
+#endif
 
 #if defined DEBUG
 /**

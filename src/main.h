@@ -25,7 +25,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x.h"
+
+#if defined SMS
 #include "sim800l.h"
+#endif
 
 #define MAX_CLIENT      10
 #define LEN_TOPIC       12
@@ -37,14 +40,15 @@
 #define PUBLISH_SUBSCRIBED_OK 2
 #define TDS_MEASURE_REPEAT 20               //repeat measuring TDS n times to make sure the water is really dirty
 #define TDS_LIMIT 500                       //watermark value for TDS
-
+#define TDS_OVERLOAD 1000
 #define SUBSCONFIRMEDF  0x1         //subscribed flag
 #define UNSAFEF         0x2         //unsafe flag
 #define UNDIGF          0x4         //undig flag
 
 #define VREF (float)3.3                            // analog reference voltage(Volt) of the ADC
-#define SCOUNT  30                          // sum of sample point
+#define SCOUNT  10                          // sum of sample point
 
+#if defined SMS
 /* manage contact */
 struct PHONEBOOK {
   char number[LEN_PHONE_NUM];       //contact number including send sms command
@@ -55,9 +59,10 @@ struct PHONEBOOK {
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 void update_phonebook(void);
-uint16_t read_tds(void);
 void inform_customer(uint16_t);
+#endif
 
+uint16_t read_tds(void);
 uint16_t read_adc(void);
 int getMedianNum(int*);
 

@@ -130,7 +130,7 @@
           <Target>
             <UseTarget>1</UseTarget>
             <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>0</RunToMain>
+            <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
             <RestoreWatchpoints>1</RestoreWatchpoints>
             <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
@@ -350,7 +350,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\lib\CMSIS\CM3\CoreSupport;.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;.\lib\STM32F10x_StdPeriph_Driver\inc;.\src;.\lib\libsim800l</IncludePath>
+              <IncludePath>.\lib\CMSIS\CM3\CoreSupport;.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;.\lib\STM32F10x_StdPeriph_Driver\inc;.\src;.\lib\libsim800l;.\lib\lcd</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -366,7 +366,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>.\lib\CMSIS\CM3\CoreSupport;.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;.\lib\STM32F10x_StdPeriph_Driver\inc;.\src;.\lib\libsim800l</IncludePath>
+              <IncludePath>.\lib\CMSIS\CM3\CoreSupport;.\lib\CMSIS\CM3\DeviceSupport\ST\STM32F10x;.\lib\STM32F10x_StdPeriph_Driver\inc;.\src;.\lib\libsim800l;.\lib\lcd</IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
@@ -460,6 +460,21 @@
               <FileName>stm32f10x_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\STM32F10x_StdPeriph_Driver\src\stm32f10x_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lib\lcd\lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>pcf8574.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lib\lcd\pcf8574.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\lib\STM32F10x_StdPeriph_Driver\src\stm32f10x_i2c.c</FilePath>
             </File>
           </Files>
         </Group>

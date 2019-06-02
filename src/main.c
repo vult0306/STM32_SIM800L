@@ -22,7 +22,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "system_init.h"
+
+#if defined SMS
 #include "sim800l.h"
+#endif
+
+#if defined LCD
+#include "lcd.h"
+#endif
 
 #if defined TEST_SIM
 #define DBG_BUF     255
@@ -39,18 +46,33 @@ uint16_t DbgCounter;
 uint16_t cmd;
 bool new_cmd = FALSE;
 #endif
+#if defined LCD
+unsigned char bl_state;
+unsigned char data_value;
+void show_value(uint8_t line,uint16_t value);
+//                    TDS: XXX PPM
+const char txt1[] = {"  TDS:      PPM "};
+const char txt2[] = {"   CLEAN WATER  "};
+const char txt3[] = {"   DIRTY WATER  "};
+const char txt4[] = {" !! NO WATER !! "};
+const char txt5[] = {"                "};
+#endif
+
 uint16_t RxCounter;
+#if defined SMS
 char rx_buf[SIM_BUFFER];
 char publish_mes[MAX_PUBLISH_MES][LEN_PUBLISH_MES]={"NUOC UONG KHONG DU DO TINH KHIET DE UONG, VUI LONG KIEM TRA HAN SU DUNG LOI LOC",
                                                     "DAU DO KHONG CO NUOC, KIEM TRA KET NOI DAU DO, QUE DO PHAI NGAP SAU TRONG NUOC ",
                                                     "DANG KY THANH CONG, HE THONG SE THONG BAO CHO QUY KHACH VE CHAT LUONG NUOC LOC "};
 char topic[LEN_TOPIC]="858173002686";
-uint8_t tds_over_range=0,tds_under_range=0,tds_in_range=0,sim_signal;
 struct PHONEBOOK contact[MAX_CLIENT];
+uint8_t sim_signal;
+#endif
 
 #if defined ADC
-float averageVoltage = 0,temperature = 23;
+float averageVoltage = 0,temperature = 30.1;
 uint16_t tdsValue = 0;
+uint8_t tds_over_range=0,tds_under_range=0,tds_in_range=0;
 #endif
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,7 +88,13 @@ int main(void)
 {
     uint8_t i;
     booting();
-    Delay(15000);
+    // Delay(15000);
+#if defined LCD
+    LCD_init();
+    LCD_clear_home();
+    LCD_goto(0, 0);
+    LCD_putstr(txt1);
+#endif
 
 #if defined DEBUG
     while(1)
@@ -118,6 +146,7 @@ int main(void)
     }
 #endif
 
+#if defined SMS
     //interact with sim via text mode
     while( (sim_set_text_mode(1,rx_buf) & SIM_RES_OK) == 0 );
 
@@ -133,9 +162,11 @@ int main(void)
         memset(contact[i].number,'x',LEN_PHONE_NUM);
         contact[i].stat   = 0;
     }
+#endif
 
     while (1)
     {
+#if defined SMS
         sim_signal = sim_signal_strength(rx_buf);
         if( (2 < sim_signal) && (30 > sim_signal) )
         {
@@ -151,6 +182,8 @@ int main(void)
         Delay(100);
         update_phonebook();
         Delay(100);
+#endif
+
 #if defined ADC
         tds_over_range=0;
         tds_under_range=0;
@@ -159,16 +192,32 @@ int main(void)
             Delay(500);
             tdsValue=read_tds();
             if(tdsValue>TDS_LIMIT){
+                if(tdsValue > TDS_OVERLOAD)              
+                {
+                    LCD_goto(6, 0);
+                    LCD_putchar('>');
+                    show_value(0,TDS_OVERLOAD);
+                }
+                else
+                {
+                    show_value(0,tdsValue);
+                }
                 blink_led(TDS_STATUS_Pin,500);  //blink warning led
                 tds_over_range++;
             }
-            else if(tdsValue < 30){
+            else if(tdsValue < 5){
+                show_value(0,0);
+                LCD_goto(0, 1);
+                LCD_putstr(txt4);
                 blink_led(TDS_STATUS_Pin,0);  //turn off tds led
                 GPIO_WriteBit(TDS_STATUS_PORT, TDS_STATUS_Pin, (BitAction)(0));
                 tds_under_range++;
             }
             else
             {
+                show_value(0,tdsValue);
+                LCD_goto(0, 1);
+                LCD_putstr(txt2);
                 blink_led(TDS_STATUS_Pin,0);
                 GPIO_WriteBit(TDS_STATUS_PORT, TDS_STATUS_Pin, (BitAction)(1));
                 tds_in_range++;
@@ -176,6 +225,7 @@ int main(void)
             
         }
 
+#if defined SMS
         if(tds_over_range == TDS_MEASURE_REPEAT)
         {
             //tds is over safe range
@@ -190,14 +240,14 @@ int main(void)
         {
             inform_customer(50);    // choose any value between 0 and TDS_LIMIT
         }
-        
+#endif
 #endif
         // GPIO_WriteBit(GPIOA, GPIO_Pin_6, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_6)));
     }
 }
 
 
-#if defined ADC
+#if defined SMS
 /*-----------------------------------------------------------------*/
 /*
  * this function send out warning message to customer if the probe
@@ -240,6 +290,7 @@ void inform_customer(uint16_t tds)
 }
 #endif
 
+#if defined SMS
 /**
   * @this function loop through all sms in memory. 
   * @>  If message contain valid activating code:
@@ -299,7 +350,7 @@ void update_phonebook(void){
         }
     }
 }
-
+#endif
 
 #if defined ADC
 /**
@@ -327,6 +378,7 @@ uint16_t read_tds(void)
     int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
     float compensationCoefficient;
     float compensationVolatge;
+    uint16_t voltage;
 
     for( analogBufferIndex=0; analogBufferIndex < SCOUNT; analogBufferIndex++)
     {
@@ -340,6 +392,7 @@ uint16_t read_tds(void)
     //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0));
     compensationCoefficient=1.0+0.02*(temperature-25.0);
     compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
+    voltage=(uint16_t)(compensationVolatge*100);
     //convert voltage value to tds value
     // (a.x^3 + b.x^2 + c.x)/2
     //  a = 133.42
@@ -378,7 +431,26 @@ int getMedianNum(int* bArray)
       return bTemp;
 }
 #endif
-
+#if defined LCD
+//line 0: tds value
+//line 1: voltage value
+void show_value(uint8_t line,uint16_t value)
+{
+    char ch = 0x00;
+    ch = ((value / 1000) + 0x30);
+    LCD_goto(7, line);
+    LCD_putchar(ch);
+    ch = (((value / 100) % 10) + 0x30);
+    LCD_goto(8, line);
+    LCD_putchar(ch);
+    ch = (((value / 10) % 10) + 0x30);
+    LCD_goto(9, line);
+    LCD_putchar(ch);
+    ch = ((value % 10) + 0x30);
+    LCD_goto(10, line);
+    LCD_putchar(ch);
+}
+#endif
 #ifdef  USE_FULL_ASSERT
 
 /**
